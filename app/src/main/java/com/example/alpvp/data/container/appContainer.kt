@@ -1,26 +1,40 @@
 package com.example.alpvp.data.container
 
-import com.google.gson.GsonBuilder
-import com.example.alpvp.data.repository.AppRepository
-import com.example.alpvp.data.network.ApiService
+import com.example.alpvp.data.Repository.UserRepository
+import com.example.alpvp.data.Service.FoodService
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import kotlin.getValue
+import kotlin.lazy
+import com.example.alpvp.data.Service.UserService
+import com.example.alpvp.data.Repository.FoodRepository
+
+
 
 class AppContainer {
     companion object {
-        private const val BASE_URL = "https://your-backend-api.com/" // Replace with your actual API URL
+        val BASE_URL = "https://localhost:3000/api/"
     }
 
     private val retrofit = Retrofit.Builder()
+        .addConverterFactory(GsonConverterFactory.create())
         .baseUrl(BASE_URL)
-        .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
         .build()
 
-    private val apiService: ApiService by lazy {
-        retrofit.create(ApiService::class.java)
+    private val userService: UserService by lazy {
+        retrofit.create(UserService::class.java)
     }
 
-    val appRepository: AppRepository by lazy {
-        AppRepository(apiService)
+    val userRepository: UserRepository by lazy {
+        UserRepository(userService)
     }
+
+    private val foodService: FoodService by lazy {
+        retrofit.create(FoodService::class.java)
+    }
+
+    val foodRepository: FoodRepository by lazy {
+        FoodRepository(foodService)
+    }
+
 }
