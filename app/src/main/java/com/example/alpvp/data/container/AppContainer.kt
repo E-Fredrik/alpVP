@@ -1,4 +1,3 @@
-// File: `app/src/main/java/com/example/alpvp/data/container/AppContainer.kt`
 package com.example.alpvp.data.container
 
 import android.content.Context
