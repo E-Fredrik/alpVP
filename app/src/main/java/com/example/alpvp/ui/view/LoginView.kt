@@ -22,25 +22,17 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import com.example.alpvp.data.Repository.UserRepository
-import com.example.alpvp.data.Service.UserService
-import com.example.alpvp.data.dto.Data
-import com.example.alpvp.data.dto.RegisterUserRequest
-import com.example.alpvp.data.dto.UserLoginRequest
-import com.example.alpvp.data.dto.UserLoginResponse
 import com.example.alpvp.ui.viewModel.AuthViewModel
 import kotlinx.coroutines.launch
-import retrofit2.Response
+
 
 @Composable
 fun LoginScreen(
     authViewModel: AuthViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToSignUp: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     var email by remember { mutableStateOf("") }
@@ -51,8 +43,6 @@ fun LoginScreen(
     val loading = uiState.loading
     val error = uiState.error
 
-
-    // soft pastel vertical background
     val bg = Brush.verticalGradient(listOf(Color(0xFFF3F7FB), Color(0xFFEFF4FB)))
 
     Surface(modifier = modifier.fillMaxSize()) {
@@ -198,24 +188,12 @@ fun LoginScreen(
                     Divider(modifier = Modifier.weight(1f), color = Color(0xFFDEE7F4))
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedButton(
-                    onClick = { /* google / social login */ },
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                ) {
-                    Text("Continue with Google", color = Color(0xFF666C78))
-                }
-
                 Spacer(modifier = Modifier.height(22.dp))
 
                 Row {
                     Text("Don't have an account?", color = Color.Gray)
                     Spacer(modifier = Modifier.width(6.dp))
-                    TextButton(onClick = { /* navigate to sign up */ }) {
+                    TextButton(onClick = { onNavigateToSignUp() }) {
                         Text("Sign up", color = Color(0xFF4F8BFF))
                     }
                 }

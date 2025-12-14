@@ -30,7 +30,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.alpvp.data.container.AppContainer
+//import com.example.alpvp.ui.view.FoodScreen
 import com.example.alpvp.ui.view.LoginScreen
+import com.example.alpvp.ui.view.RegisterScreen
 import com.example.alpvp.ui.viewModel.AuthViewModel
 
 enum class AppScreens (val title: String, val icon: ImageVector?= null) {
@@ -39,6 +41,7 @@ enum class AppScreens (val title: String, val icon: ImageVector?= null) {
     FRIENDS("Friends", Icons.Filled.Groups),
     PROFILE("Profile", Icons.Filled.Person),
     LOGIN("Login"),
+    REGISTER("Register"),
     ERROR("ERROR")
 }
 
@@ -128,7 +131,7 @@ fun AppRouting() {
                     }
                     Text("Redirecting to Login...")
                 } else {
-                    Text("Food Screen")
+//                    FoodScreen
                 }
             }
 
@@ -170,7 +173,26 @@ fun AppRouting() {
                 } else {
                     LoginScreen(
                         authViewModel = authViewModel,
+                        onNavigateToSignUp = {
+                            navController.navigate("Register") {
+                                launchSingleTop = true
+                            }
+                        }
                     )
+                }
+            }
+
+            composable("Register") {
+                if (uiState.token != null) {
+                    LaunchedEffect(uiState.token) {
+                        navController.navigate(AppScreens.HOME.title) {
+                            popUpTo("Register") { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                    Text("Redirecting to Home...")
+                } else {
+                    RegisterScreen(authViewModel = authViewModel)
                 }
             }
         }
