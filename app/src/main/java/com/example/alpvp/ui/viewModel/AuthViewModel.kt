@@ -1,39 +1,69 @@
+// File: `app/src/main/java/com/example/alpvp/ui/viewModel/AuthViewModel.kt`
 package com.example.alpvp.ui.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alpvp.data.Repository.UserRepository
+import com.example.alpvp.data.UserPreferencesRepository
 import com.example.alpvp.ui.model.UserModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import android.util.Log
 
 data class AuthUiState(
     val loading: Boolean = false,
     val token: String? = null,
+    val userId: Int? = null,
     val user: UserModel? = null,
     val error: String? = null
 )
 
 class AuthViewModel(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState
+
+    init {
+        viewModelScope.launch {
+            userPreferencesRepository.authTokenFlow.collect { token ->
+                if (token != null) {
+                    userPreferencesRepository.userIdFlow.collect { userId ->
+                        _uiState.value = _uiState.value.copy(
+                            token = token,
+                            userId = userId,
+                            user = userId?.let { UserModel(id = it) }
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     fun login(email: String, password: String) {
         _uiState.value = _uiState.value.copy(loading = true, error = null)
         viewModelScope.launch {
             try {
                 val data = userRepository.loginUser(email.trim(), password)
+
+                userPreferencesRepository.saveAuth(data.token, data.userId!!)
+
                 _uiState.value = _uiState.value.copy(
                     loading = false,
                     token = data.token,
-                    user = UserModel(email = email) // minimal; replace when user endpoint available
+                    userId = data.userId,
+                    user = UserModel(id = data.userId)
                 )
             } catch (t: Throwable) {
-                _uiState.value = _uiState.value.copy(loading = false, error = t.message ?: "Login failed")
+                t.printStackTrace()
+                Log.e("AuthViewModel", "login error", t)
+                _uiState.value = _uiState.value.copy(
+                    loading = false,
+                    error = t.message ?: "Login failed"
+                )
             }
         }
     }
@@ -48,14 +78,30 @@ class AuthViewModel(
                     weight = weight,
                     bmiGoal = bmiGoal
                 )
+
+                userPreferencesRepository.saveAuth(data.token, data.userId!!)
+
                 _uiState.value = _uiState.value.copy(
                     loading = false,
                     token = data.token,
+                    userId = data.userId,
                     user = UserModel(name = name, email = email)
                 )
             } catch (t: Throwable) {
-                _uiState.value = _uiState.value.copy(loading = false, error = t.message ?: "Registration failed")
+                t.printStackTrace()
+                Log.e("AuthViewModel", "register error", t)
+                _uiState.value = _uiState.value.copy(
+                    loading = false,
+                    error = t.message ?: "Registration failed"
+                )
             }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            userPreferencesRepository.clearAuth()
+            _uiState.value = AuthUiState()
         }
     }
 

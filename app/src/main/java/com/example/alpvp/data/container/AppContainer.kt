@@ -1,19 +1,18 @@
+// File: `app/src/main/java/com/example/alpvp/data/container/AppContainer.kt`
 package com.example.alpvp.data.container
 
+import android.content.Context
 import com.example.alpvp.data.Repository.UserRepository
 import com.example.alpvp.data.Service.FoodService
+import com.example.alpvp.data.UserPreferencesRepository
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import kotlin.getValue
-import kotlin.lazy
 import com.example.alpvp.data.Service.UserService
 import com.example.alpvp.data.Repository.FoodRepository
 
-
-
-class AppContainer {
+class AppContainer(private val context: Context) {
     companion object {
-        val BASE_URL = "http://10.0.2.2:3000/api/"
+        const val BASE_URL = "http://10.0.2.2:3000/api/"
     }
 
     private val retrofit = Retrofit.Builder()
@@ -23,6 +22,10 @@ class AppContainer {
 
     private val userService: UserService by lazy {
         retrofit.create(UserService::class.java)
+    }
+
+    val userPreferencesRepository: UserPreferencesRepository by lazy {
+        UserPreferencesRepository(context)
     }
 
     val userRepository: UserRepository by lazy {
@@ -36,5 +39,4 @@ class AppContainer {
     val foodRepository: FoodRepository by lazy {
         FoodRepository(foodService)
     }
-
 }

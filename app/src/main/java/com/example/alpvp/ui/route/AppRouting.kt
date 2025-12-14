@@ -17,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -30,10 +31,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.alpvp.data.container.AppContainer
+import com.example.alpvp.ui.view.FoodScreen
 //import com.example.alpvp.ui.view.FoodScreen
 import com.example.alpvp.ui.view.LoginScreen
 import com.example.alpvp.ui.view.RegisterScreen
 import com.example.alpvp.ui.viewModel.AuthViewModel
+import com.example.alpvp.ui.viewModel.FoodViewModel
 
 enum class AppScreens (val title: String, val icon: ImageVector?= null) {
     HOME("Home", Icons.Filled.Home),
@@ -76,7 +79,9 @@ fun BottomNavBar(
 fun AppRouting() {
     val navController = rememberNavController()
 
-    val container = AppContainer()
+    val container = AppContainer(
+        context = LocalContext.current.applicationContext
+    )
 
     // inline factory: no separate file required
     val authViewModel: AuthViewModel = viewModel(
@@ -84,7 +89,10 @@ fun AppRouting() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
                     @Suppress("UNCHECKED_CAST")
-                    return AuthViewModel(container.userRepository) as T
+                    return AuthViewModel(
+                        container.userRepository,
+                        container.userPreferencesRepository
+                    ) as T
                 }
                 throw IllegalArgumentException("Unknown ViewModel class")
             }
@@ -131,9 +139,22 @@ fun AppRouting() {
                     }
                     Text("Redirecting to Login...")
                 } else {
-//                    FoodScreen
+                    val foodViewModel: FoodViewModel = viewModel(
+                        factory = object : ViewModelProvider.Factory {
+                            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                @Suppress("UNCHECKED_CAST")
+                                return FoodViewModel(
+                                    container.foodRepository,
+                                    uiState.token!!,
+                                    uiState.userId!!
+                                ) as T
+                            }
+                        }
+                    )
+                    FoodScreen(foodViewModel = foodViewModel)
                 }
             }
+
 
             composable(AppScreens.FRIENDS.title) {
                 if (uiState.token == null) {

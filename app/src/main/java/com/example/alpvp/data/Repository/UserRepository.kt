@@ -2,15 +2,14 @@
 package com.example.alpvp.data.Repository
 
 import com.example.alpvp.data.Service.UserService
-import com.example.alpvp.data.dto.Data
+import com.example.alpvp.data.dto.User
 import com.example.alpvp.data.dto.RegisterUserRequest
 import com.example.alpvp.data.dto.UserLoginRequest
-import retrofit2.HttpException
 import java.io.IOException
 
 class UserRepository(private val userService: UserService) {
 
-    suspend fun loginUser(email: String, password: String): Data {
+    suspend fun loginUser(email: String, password: String): User {
         val request = UserLoginRequest(email = email, password = password)
         val response = try {
             userService.loginUser(request)
@@ -34,7 +33,7 @@ class UserRepository(private val userService: UserService) {
         height: Int,
         weight: Int,
         bmiGoal: Int
-    ): Data {
+    ): User {
         val request = RegisterUserRequest(
             bmiGoal = bmiGoal,
             email = email,

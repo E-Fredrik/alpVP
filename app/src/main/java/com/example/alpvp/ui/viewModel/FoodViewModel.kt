@@ -8,20 +8,23 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import android.util.Log
 
 data class FoodUiState(
     val loading: Boolean = false,
     val logs: List<FoodLogItem> = emptyList(),
     val searchQuery: String = "",
-    val selectedMeal: String = "Lunch",
+    val searchResults: List<FoodItem> = emptyList(),
     val showAddDialog: Boolean = false,
-    val error: String? = null,
-    val locationText: String = "Fetching location..."
+    val showManualEntry: Boolean = false,
+    val selectedFood: FoodItem? = null,
+    val error: String? = null
 )
 
 class FoodViewModel(
     private val foodRepository: FoodRepository,
-    private val token: String
+    private val token: String,
+    private val userId: Int
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FoodUiState())
@@ -35,82 +38,94 @@ class FoodViewModel(
         _uiState.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             try {
-                // Sample data for testing - replace with actual API call when ready
-                val now = System.currentTimeMillis()
-                val pizza = Food(name = "Margherita Pizza", calories = 480, food_id = 1)
-                val pepper = Food(name = "Pepperoni Pizza", calories = 540, food_id = 2)
-                val salad = Food(name = "Caesar Salad", calories = 200, food_id = 3)
-
-                val l1 = FoodInLog(calories = 480, food = pizza, food_id = 1, id = 1, log_id = 101, quantity = 2)
-                val l2 = FoodInLog(calories = 540, food = pepper, food_id = 2, id = 2, log_id = 102, quantity = 2)
-                val l3 = FoodInLog(calories = 200, food = salad, food_id = 3, id = 3, log_id = 103, quantity = 1)
-
-                val logs = listOf(
-                    FoodLogItem(foodInLogs = listOf(l1), latitude = 0.0, log_id = 101, longitude = 0.0, timestamp = now, user_id = 1),
-                    FoodLogItem(foodInLogs = listOf(l2), latitude = 0.0, log_id = 102, longitude = 0.0, timestamp = now - 86400000L, user_id = 2),
-                    FoodLogItem(foodInLogs = listOf(l3), latitude = 0.0, log_id = 103, longitude = 0.0, timestamp = now - 2 * 86400000L, user_id = 3),
-                )
-
-                _uiState.update { it.copy(loading = false, logs = logs, locationText = "You're at Joe's Pizza") }
+                val logs = foodRepository.getFoodLogByUser(token, userId)
+                _uiState.update { it.copy(loading = false, logs = logs) }
             } catch (t: Throwable) {
-                _uiState.update { it.copy(loading = false, error = t.message ?: "Failed loading logs") }
+                t.printStackTrace()
+                Log.e("FoodViewModel", "loadFoodLogs error", t)
+                _uiState.update { it.copy(loading = false, error = t.message ?: "Load failed") }
             }
         }
     }
 
-    fun setSearch(query: String) {
-        _uiState.update { it.copy(searchQuery = query) }
+
+
+    fun searchFood(query: String) {
+        _uiState.update { it.copy(searchQuery = query, error = null) }
+        val trimmed = query.trim()
+        if (trimmed.isBlank()) {
+            _uiState.update { it.copy(searchResults = emptyList()) }
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val results = foodRepository.getFoodByName(trimmed)
+                _uiState.update { it.copy(searchResults = results) }
+            } catch (t: Throwable) {
+                t.printStackTrace()
+                Log.e("FoodViewModel", "searchFood error", t)
+                _uiState.update { it.copy(searchResults = emptyList(), error = t.message) }
+            }
+        }
     }
 
-    fun selectMeal(meal: String) {
-        _uiState.update { it.copy(selectedMeal = meal) }
+    fun selectFood(food: FoodItem) {
+        _uiState.update {
+            it.copy(
+                selectedFood = food,
+                searchQuery = food.name ?: "",
+                searchResults = emptyList()
+            )
+        }
+    }
+
+    fun showManualEntry() {
+        _uiState.update { it.copy(showManualEntry = true, selectedFood = null) }
     }
 
     fun toggleAddDialog(show: Boolean) {
-        _uiState.update { it.copy(showAddDialog = show) }
+        _uiState.update {
+            it.copy(
+                showAddDialog = show,
+                searchQuery = "",
+                searchResults = emptyList(),
+                selectedFood = null,
+                showManualEntry = false,
+                error = null
+            )
+        }
+        if (!show) {
+            loadFoodLogs()
+        }
     }
 
-    fun addManualLog(foodName: String, calories: Int, quantity: Int) {
+    fun addFoodLog(foodName: String, calories: Int, quantity: Int) {
         _uiState.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             try {
-                // Step 1: Create the food item
-                val newFood = FoodItem(
-                    name = foodName,
+                val food = Food(
                     calories = calories,
-                    id = 0 // server assigns ID
+                    food_id = 0,
+                    name = foodName
                 )
-                val createdFood = foodRepository.createFood(newFood)
 
-                // Step 2: Create the food log
-                val logRequest = FoodLogRequest(
-                    foods = listOf(Food(name = createdFood.name, calories = createdFood.calories, food_id = createdFood.id)),
+                val request = FoodLogRequest(
+                    foods = listOf(food),
                     latitude = 0.0,
                     longitude = 0.0,
                     timestamp = System.currentTimeMillis(),
-                    user_id = 0 // backend should extract from token
+                    user_id = userId
                 )
-                val createdLog = foodRepository.createFoodLog(token, logRequest)
 
-                // Step 3: Create food-in-log entry
-                val foodInLogRequest = FoodInLogRequest(
-                    calories = calories,
-                    food_id = createdFood.id,
-                    log_id = createdLog.log_id,
-                    quantity = quantity
-                )
-                foodRepository.createFoodInLog(token, foodInLogRequest)
+                foodRepository.createFoodLog(token, request)
 
-                // Refresh logs from server or prepend locally
-                _uiState.update { state ->
-                    state.copy(
-                        loading = false,
-                        logs = listOf(createdLog) + state.logs,
-                        showAddDialog = false
-                    )
-                }
+                _uiState.update { it.copy(loading = false, showAddDialog = false) }
+                loadFoodLogs()
             } catch (t: Throwable) {
-                _uiState.update { it.copy(loading = false, error = t.message ?: "Failed to add log") }
+                t.printStackTrace()
+                Log.e("FoodViewModel", "addFoodLog error", t)
+                _uiState.update { it.copy(loading = false, error = t.message ?: "Add failed") }
             }
         }
     }

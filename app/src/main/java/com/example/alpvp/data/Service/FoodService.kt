@@ -45,4 +45,15 @@ interface FoodService {
         @Header("Authorization") authorization: String,
         @Path("id") id: Int
     ): Response<FoodLogResponse>
+
+    @GET("foodlogs/user/{user_id}")
+    suspend fun getFoodLogsByUser(
+        @Header("Authorization") authorization: String,
+        @Path("user_id") userId: Int
+    ): Response<List<FoodLogResponse>>
+
+    @GET("getfoodbyname/{name}")
+    suspend fun getFoodByName(
+        @Path("name") name: String
+    ): Response<List<FoodResponse>>
 }
