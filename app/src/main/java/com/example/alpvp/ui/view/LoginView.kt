@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -41,7 +40,6 @@ import retrofit2.Response
 @Composable
 fun LoginScreen(
     authViewModel: AuthViewModel,
-    navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
@@ -53,14 +51,6 @@ fun LoginScreen(
     val loading = uiState.loading
     val error = uiState.error
 
-    // navigate to home when token is available
-    LaunchedEffect(uiState.token) {
-        if (!uiState.token.isNullOrEmpty()) {
-            navController.navigate("home") {
-                popUpTo("login") { inclusive = true }
-            }
-        }
-    }
 
     // soft pastel vertical background
     val bg = Brush.verticalGradient(listOf(Color(0xFFF3F7FB), Color(0xFFEFF4FB)))
@@ -232,25 +222,4 @@ fun LoginScreen(
             }
         }
     }
-}
-
-@SuppressLint("ViewModelConstructorInComposable")
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun LoginScreenPreview() {
-    val navController = rememberNavController()
-
-    val fakeService = object : UserService {
-        override suspend fun loginUser(user: UserLoginRequest): Response<UserLoginResponse> {
-            return Response.success(UserLoginResponse(Data(token = "preview-token")))
-        }
-        override suspend fun registerUser(user: RegisterUserRequest): Response<UserLoginResponse> {
-            return Response.success(UserLoginResponse(Data(token = "preview-token")))
-        }
-    }
-
-    val repo = UserRepository(fakeService)
-    val authViewModel = AuthViewModel(userRepository = repo)
-
-    LoginScreen(authViewModel = authViewModel, navController = navController)
 }
