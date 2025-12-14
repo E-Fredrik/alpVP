@@ -16,9 +16,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class AppContainer {
     companion object {
-        // Use 10.0.2.2 for Android emulator to access localhost
-        // For physical device, use your computer's IP address
-        const val BASE_URL = "http://10.0.2.2:3000/api/"
+        val BASE_URL = "http://10.0.2.2:3000/api/"
     }
 
     private val retrofit = Retrofit.Builder()

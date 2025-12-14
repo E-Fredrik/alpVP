@@ -13,23 +13,18 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavHost
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.alpvp.data.container.AppContainer
-import com.example.alpvp.ui.view.DashboardScreen
-import com.example.alpvp.ui.view.FriendsScreen
-import com.example.alpvp.ui.viewModel.DashboardViewModel
 
 enum class AppScreens (val title: String, val icon: ImageVector?= null) {
     HOME("Home", Icons.Filled.Home),
@@ -74,12 +69,8 @@ fun AppRouting() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-
-    // Create AppContainer and DashboardViewModel
-    val appContainer = remember { AppContainer() }
-    val dashboardViewModel = remember { 
-        DashboardViewModel(appContainer.dashboardRepository) 
-    }
+    val currentRoute = currentDestination?.route
+    val currentView = AppScreens.entries.find({it.title == currentRoute}) ?: AppScreens.HOME
 
     Scaffold(
         bottomBar = {
@@ -101,25 +92,16 @@ fun AppRouting() {
             startDestination = AppScreens.HOME.title
         ) {
             composable(AppScreens.HOME.title) {
-                // TODO: Get token from proper auth flow - using placeholder for now
-                LaunchedEffect(Unit) {
-                    // dashboardViewModel.loadDashboardData("your-token-here")
-                }
-                DashboardScreen(
-                    dashboardViewModel = dashboardViewModel,
-                    onOpenFood = {
-                        navController.navigate(AppScreens.FOOD.title)
-                    }
-                )
+                Text("Home Screen")
             }
             composable(AppScreens.FOOD.title) {
-                Text("Food Screen - Coming Soon")
+                Text("Food Screen")
             }
             composable(AppScreens.FRIENDS.title) {
-                FriendsScreen(dashboardViewModel = dashboardViewModel)
+                Text("Friends Screen")
             }
             composable(AppScreens.PROFILE.title) {
-                Text("Profile Screen - Coming Soon")
+                Text("Profile Screen")
             }
         }
     }
