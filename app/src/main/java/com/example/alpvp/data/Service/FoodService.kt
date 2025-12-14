@@ -5,6 +5,7 @@ import com.example.alpvp.data.dto.FoodInLogRequest
 import com.example.alpvp.data.dto.FoodInLogResponse
 import com.example.alpvp.data.dto.FoodLogRequest
 import com.example.alpvp.data.dto.FoodLogResponse
+import com.example.alpvp.data.dto.FoodLogsResponse
 import com.example.alpvp.data.dto.FoodResponse
 import com.example.alpvp.data.dto.FoodItem
 import retrofit2.Response
@@ -50,7 +51,7 @@ interface FoodService {
     suspend fun getFoodLogsByUser(
         @Header("Authorization") authorization: String,
         @Path("user_id") userId: Int
-    ): Response<List<FoodLogResponse>>
+    ): Response<FoodLogsResponse>
 
     @GET("getfoodbyname/{name}")
     suspend fun getFoodByName(

@@ -93,14 +93,15 @@ class FoodRepository(private val foodService: FoodService) {
 
     suspend fun getFoodLogByUser(token: String, userId: Int): List<FoodLogItem> {
         val authHeader = "Bearer $token"
-        val response: Response<List<FoodLogResponse>> = try {
+        val response: Response<FoodLogsResponse> = try {
             foodService.getFoodLogsByUser(authHeader, userId)
         } catch (e: IOException) {
             throw IOException("Network error: ${e.message}", e)
         }
+
         if (response.isSuccessful) {
-            val body = response.body() ?: throw IllegalStateException("Empty response body")
-            return body.map { it.data }
+            val body = response.body() ?: return emptyList()
+            return body.`data`
         } else {
             val err = response.errorBody()?.string()
             throw Exception(err ?: "Get food logs by user failed: ${response.code()}")
