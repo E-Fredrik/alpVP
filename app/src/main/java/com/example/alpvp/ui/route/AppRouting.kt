@@ -34,6 +34,7 @@ import com.example.alpvp.data.container.AppContainer
 import com.example.alpvp.ui.view.FoodScreen
 //import com.example.alpvp.ui.view.FoodScreen
 import com.example.alpvp.ui.view.LoginScreen
+import com.example.alpvp.ui.view.ProfileScreen
 import com.example.alpvp.ui.view.RegisterScreen
 import com.example.alpvp.ui.viewModel.AuthViewModel
 import com.example.alpvp.ui.viewModel.FoodViewModel
@@ -178,9 +179,10 @@ fun AppRouting() {
                     }
                     Text("Redirecting to Login...")
                 } else {
-                    Text("Profile Screen")
+                    ProfileScreen(authViewModel = authViewModel)
                 }
             }
+
 
             composable(AppScreens.LOGIN.title) {
                 if (uiState.token != null) {
