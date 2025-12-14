@@ -1,5 +1,5 @@
 // kotlin
-package com.example.alpvp.data.Repository
+package com.example.alpvp.data.repository
 
 import com.example.alpvp.data.Service.FoodService
 import com.example.alpvp.data.dto.*

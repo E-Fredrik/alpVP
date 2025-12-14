@@ -1,10 +1,10 @@
 package com.example.alpvp.data.services
 
-import com.example.alpvp.data.model.*
+import com.example.alpvp.ui.model.*
 import retrofit2.http.*
 
 interface AppService {
-    // User endpoints
+
     @GET("users/{userId}")
     suspend fun getUser(@Path("userId") userId: Int): User
 

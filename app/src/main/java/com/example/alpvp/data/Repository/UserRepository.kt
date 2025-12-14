@@ -1,61 +1,21 @@
-// kotlin
-package com.example.alpvp.data.Repository
+package com.example.alpvp.data.repository
 
-import com.example.alpvp.data.Service.UserService
-import com.example.alpvp.data.dto.Data
-import com.example.alpvp.data.dto.RegisterUserRequest
-import com.example.alpvp.data.dto.UserLoginRequest
-import retrofit2.HttpException
-import java.io.IOException
+import com.example.alpvp.ui.model.User
+import com.example.alpvp.data.services.AppService
+import com.example.alpvp.data.services.UserGoals
 
-class UserRepository(private val userService: UserService) {
+class UserRepository(private val appService: AppService) {
 
-    suspend fun loginUser(email: String, password: String): Data {
-        val request = UserLoginRequest(email = email, password = password)
-        val response = try {
-            userService.loginUser(request)
-        } catch (e: IOException) {
-            throw IOException("Network error: ${e.message}", e)
-        }
-
-        if (response.isSuccessful) {
-            val body = response.body() ?: throw IllegalStateException("Empty response body")
-            return body.data
-        } else {
-            val err = response.errorBody()?.string()
-            throw Exception(err ?: "Login failed: ${response.code()}")
-        }
+    suspend fun getUser(userId: Int): User {
+        return appService.getUser(userId)
     }
 
-    suspend fun registerUser(
-        username: String,
-        email: String,
-        password: String,
-        height: Int,
-        weight: Int,
-        bmiGoal: Int
-    ): Data {
-        val request = RegisterUserRequest(
-            bmiGoal = bmiGoal,
-            email = email,
-            height = height,
-            password = password,
-            username = username,
-            weight = weight
-        )
+    suspend fun updateUser(userId: Int, user: User): User {
+        return appService.updateUser(userId, user)
+    }
 
-        val response = try {
-            userService.registerUser(request)
-        } catch (e: IOException) {
-            throw IOException("Network error: ${e.message}", e)
-        }
-
-        if (response.isSuccessful) {
-            val body = response.body() ?: throw IllegalStateException("Empty response body")
-            return body.data
-        } else {
-            val err = response.errorBody()?.string()
-            throw Exception(err ?: "Register failed: ${response.code()}")
-        }
+    suspend fun updateUserGoals(userId: Int, bmiGoal: Float): User {
+        return appService.updateUserGoals(userId, UserGoals(bmiGoal))
     }
 }
+
