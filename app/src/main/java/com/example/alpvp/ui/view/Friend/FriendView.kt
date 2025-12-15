@@ -2,7 +2,10 @@ package com.example.alpvp.ui.view.Friend
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -26,7 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.example.alpvp.R
 
 @Composable
-fun View() {
+fun FriendView() {
     var search by remember { mutableStateOf("") }
     Column(
         modifier = Modifier
@@ -35,38 +39,50 @@ fun View() {
             .padding(16.dp)
             .padding(top = 16.dp)
     ) {
-        Text("Friends List",
-            fontWeight = FontWeight.Bold,
-            fontSize = 50.sp,
-            color = Color(0xFF000000)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Text("Friends",
+                fontWeight = FontWeight.Bold,
+                fontSize = 30.sp,
+                color = Color(0xFF000000)
+            )
+            TextButton(
+                onClick = {},
+                enabled = true,
+                modifier = Modifier
+                    .background(Color(0xFF005AFF))
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.addicon),
+                    "search"
+                )
+            }
+        }
+        Text("See what your friends are eating",
+            color = Color(0x80000000)
         )
         Column(
             modifier = Modifier
                 .padding(top = 16.dp)
         ) {
-            TextField(
-                value = search,
-                onValueChange = {search = it},
-                modifier = Modifier
-                    .fillMaxWidth(),
-                colors = TextFieldDefaults.colors(
-                    unfocusedContainerColor = Color(0xFFFFFFFF),
-                    unfocusedIndicatorColor = Color(0x00FFFFFF),
-                    focusedContainerColor = Color(0xFFFFFFFF),
-                    focusedIndicatorColor = Color(0x00FFFFFF)
-                ),
-                shape = RoundedCornerShape(30.dp),
-                maxLines = 1,
-                leadingIcon = {
-                    TextButton(
-                        onClick = {}
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.search),
-                            "search"
-                        )
-                    }
-                }
+            Text("Your Friends ()",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                color = Color(0xFF000000)
+            )
+        }
+        Column(
+            modifier = Modifier
+                .padding(top = 16.dp)
+        ) {
+            Text("Recent Activity",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                color = Color(0xFF000000)
             )
         }
     }
@@ -75,5 +91,5 @@ fun View() {
 @Composable
 @Preview(showBackground = true, showSystemUi = true)
 private fun Preview(){
-    View()
+    FriendView()
 }
