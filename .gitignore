@@ -16,3 +16,8 @@ local.properties
 .idea/copilotDiffState.xml
 .idea/copilotDiffState.xml
 .idea/copilotDiffState.xml
+AAR_DOCUMENTATION.md
+AUTHENTICATION_FIX_DOCUMENTATION.md
+EMA_LOGGING_DOCUMENTATION.md
+LOCATION_NUDGE_DOCUMENTATION.md
+SYSTEM_INTEGRATION_GUIDE.md
