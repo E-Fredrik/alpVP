@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Fastfood
 import androidx.compose.material3.*
@@ -26,10 +27,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.alpvp.data.dto.FoodItem
 import com.example.alpvp.data.dto.FoodLogItem
 import com.example.alpvp.ui.viewModel.FoodViewModel
-import kotlinx.coroutines.flow.update
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.toString
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,21 +100,6 @@ fun FoodScreen(
                     onDismiss = { foodViewModel.toggleAddDialog(false) }
                 )
             }
-
-//            if (!uiState.error.isNullOrEmpty()) {
-//                Snackbar(
-//                    modifier = Modifier
-//                        .align(Alignment.BottomCenter)
-//                        .padding(16.dp),
-//                    action = {
-//                        TextButton(onClick = { foodViewModel.() }) {
-//                            Text("Dismiss")
-//                        }
-//                    }
-//                ) {
-//                    Text(uiState.error ?: "")
-//                }
-//            }
         }
     }
 }
@@ -136,11 +120,11 @@ fun FoodLogCard(log: FoodLogItem) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = formatTimestamp(log.timestamp),
+                    text = formatTimestamp(log.timestamp ?: 0L),
                     style = MaterialTheme.typography.labelMedium,
                     color = Color.Gray
                 )
-                val totalCals = log.foodInLogs.sumOf { it.calories }
+                val totalCals = log.foodInLogs?.sumOf { it.calories ?: 0 } ?: 0
                 Text(
                     text = "$totalCals cal",
                     style = MaterialTheme.typography.titleMedium,
@@ -151,27 +135,21 @@ fun FoodLogCard(log: FoodLogItem) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            log.foodInLogs.forEach { foodInLog ->
+            log.foodInLogs?.forEach { food ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = foodInLog.food.name,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = "Qty: ${foodInLog.quantity}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
-                        )
-                    }
                     Text(
-                        text = "${foodInLog.calories} cal",
+                        text = food.food.name ?: "Unknown",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "${food.calories ?: 0} cal",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color(0xFF0F1724)
                     )
@@ -188,132 +166,222 @@ fun AddFoodDialog(
     onDismiss: () -> Unit
 ) {
     val uiState by foodViewModel.uiState.collectAsStateWithLifecycle()
-    var searchQuery by remember { mutableStateOf(uiState.searchQuery) }
-    var quantity by remember { mutableStateOf("1") }
+    var currentStage by remember { mutableStateOf("FOOD_NAME") }
+    var selectedFood by remember { mutableStateOf<FoodItem?>(null) }
+    var manualFoodName by remember { mutableStateOf("") }
     var manualCalories by remember { mutableStateOf("") }
-    val selectedFood = uiState.selectedFood
+    var quantity by remember { mutableStateOf("1") }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            currentStage = "FOOD_NAME"
+            selectedFood = null
+            manualFoodName = ""
+            manualCalories = ""
+            quantity = "1"
+            onDismiss()
+        },
         containerColor = Color.White,
         shape = RoundedCornerShape(20.dp),
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (currentStage == "CALORIE_QUANTITY") {
+                    IconButton(onClick = {
+                        currentStage = "FOOD_NAME"
+                        selectedFood = null
+                    }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+                Text(
+                    text = when (currentStage) {
+                        "FOOD_NAME" -> "Search Food"
+                        else -> "Add Details"
+                    },
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
         text = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Add food", fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(12.dp))
+                when (currentStage) {
+                    "FOOD_NAME" -> {
+                        OutlinedTextField(
+                            value = uiState.searchQuery,
+                            onValueChange = { foodViewModel.searchFood(it) },
+                            label = { Text("Food name") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+                        )
 
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = {
-                        searchQuery = it
-                        // forward search to VM so repository is queried
-                        foodViewModel.searchFood(it)
-                    },
-                    label = { Text("Food name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Show suggestions when available and no selectedFood
-                val suggestions = uiState.searchResults
-                if (suggestions.isNotEmpty() && selectedFood == null) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .shadow(2.dp, RoundedCornerShape(12.dp)),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Column {
-                            suggestions.forEach { food ->
-                                // use safe calls and Material3 ListItem signature
-                                ListItem(
-                                    headlineContent = {
-                                        Text(text = food?.name ?: "")
-                                    },
-                                    supportingContent = {
-                                        Text(text = "${food?.calories ?: 0} cal", color = Color.Gray)
-                                    },
+                        if (uiState.searchResults.isNotEmpty()) {
+                            Text(
+                                "Suggestions from database:",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.Gray
+                            )
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .shadow(2.dp, RoundedCornerShape(12.dp)),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                LazyColumn(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable {
-                                            // select suggestion in VM (will set searchQuery there too)
-                                            food?.let {
-                                                foodViewModel.selectFood(it)
-                                                searchQuery = it.name ?: ""
-                                            }
+                                        .heightIn(max = 200.dp)
+                                ) {
+                                    items(uiState.searchResults) { food ->
+                                        ListItem(
+                                            headlineContent = { Text(food.name ?: "") },
+                                            supportingContent = { Text("${food.calories ?: 0} cal", color = Color.Gray) },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    selectedFood = food
+                                                    manualFoodName = food.name ?: ""
+                                                    manualCalories = food.calories?.toString() ?: ""
+                                                    currentStage = "CALORIE_QUANTITY"
+                                                }
+                                        )
+                                        if (food != uiState.searchResults.last()) {
+                                            HorizontalDivider()
                                         }
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                                Divider()
+                                    }
+                                }
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    else -> {
+                        OutlinedTextField(
+                            value = manualFoodName,
+                            onValueChange = {},
+                            label = { Text("Food name") },
+                            modifier = Modifier.fillMaxWidth(),
+                            readOnly = true,
+                            enabled = false,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        OutlinedTextField(
+                            value = manualCalories,
+                            onValueChange = { manualCalories = it.filter { ch -> ch.isDigit() } },
+                            label = { Text("Calories") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Next
+                            ),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        OutlinedTextField(
+                            value = quantity,
+                            onValueChange = { quantity = it.filter { ch -> ch.isDigit() } },
+                            label = { Text("Quantity") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            ),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                    }
                 }
 
-                // show calories for selected suggestion, otherwise manual entry
-                if (selectedFood != null) {
-                    Text("Calories: ${selectedFood.calories}", color = Color.Gray)
-                } else {
-                    OutlinedTextField(
-                        value = manualCalories,
-                        onValueChange = { manualCalories = it.filter { ch -> ch.isDigit() } },
-                        label = { Text("Calories") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                if (uiState.error != null) {
+                    Text(
+                        text = uiState.error ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = quantity,
-                    onValueChange = { quantity = it.filter { ch -> ch.isDigit() } },
-                    label = { Text("Quantity") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                )
+                if (uiState.loading) {
+                    LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color(0xFF4F8BFF)
+                    )
+                }
             }
         },
         confirmButton = {
-            Button(onClick = {
-                val qty = quantity.toIntOrNull() ?: 1
-                val nameToUse = selectedFood?.name ?: searchQuery.trim()
-                val caloriesToUse = selectedFood?.calories ?: (manualCalories.toIntOrNull() ?: 0)
-
-                if (nameToUse.isBlank() || caloriesToUse <= 0) {
-                    return@Button
+            when (currentStage) {
+                "FOOD_NAME" -> {
+                    Button(
+                        onClick = {
+                            if (uiState.searchQuery.isNotBlank()) {
+                                manualFoodName = uiState.searchQuery.trim()
+                                manualCalories = ""
+                                currentStage = "CALORIE_QUANTITY"
+                            }
+                        },
+                        enabled = uiState.searchQuery.isNotBlank(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F8BFF))
+                    ) {
+                        Text("Next", color = Color.White)
+                    }
                 }
-
-                foodViewModel.addFoodLog(nameToUse, caloriesToUse, qty)
-            },
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F8BFF))
-            ) {
-                Text("Add", color = Color.White)
+                else -> {
+                    Button(
+                        onClick = {
+                            foodViewModel.addFoodLog(
+                                foodName = manualFoodName,
+                                calories = manualCalories.toIntOrNull() ?: 0,
+                                quantity = quantity.toIntOrNull() ?: 1,
+                                foodId = selectedFood?.id
+                            )
+                            currentStage = "FOOD_NAME"
+                            selectedFood = null
+                            manualFoodName = ""
+                            manualCalories = ""
+                            quantity = "1"
+                        },
+                        enabled = !uiState.loading && manualCalories.isNotBlank() && manualCalories.toIntOrNull() != null,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F8BFF))
+                    ) {
+                        Text("Add", color = Color.White)
+                    }
+                }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = Color.Gray) }
+            TextButton(onClick = {
+                currentStage = "FOOD_NAME"
+                selectedFood = null
+                manualFoodName = ""
+                manualCalories = ""
+                quantity = "1"
+                onDismiss()
+            }) {
+                Text("Cancel", color = Color.Gray)
+            }
         }
     )
+
+    LaunchedEffect(uiState.error) {
+        if (uiState.error != null) {
+            kotlinx.coroutines.delay(3000)
+            foodViewModel.clearError()
+        }
+    }
 }
-
-
-
 
 private fun formatTimestamp(timestamp: Long): String {
     val sdf = SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault())

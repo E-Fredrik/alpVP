@@ -65,10 +65,11 @@ class FoodViewModel(
             } catch (t: Throwable) {
                 t.printStackTrace()
                 Log.e("FoodViewModel", "searchFood error", t)
-                _uiState.update { it.copy(searchResults = emptyList(), error = t.message) }
+                _uiState.update { it.copy(searchResults = emptyList()) }
             }
         }
     }
+
 
     fun selectFood(food: FoodItem) {
         _uiState.update {
@@ -100,13 +101,28 @@ class FoodViewModel(
         }
     }
 
-    fun addFoodLog(foodName: String, calories: Int, quantity: Int) {
+    fun addFoodLog(foodName: String, calories: Int, quantity: Int, foodId: Int? = null) {
+        if (foodName.isBlank()) {
+            _uiState.update { it.copy(error = "Food name cannot be empty") }
+            return
+        }
+
+        if (calories <= 0) {
+            _uiState.update { it.copy(error = "Please enter valid calories") }
+            return
+        }
+
+        if (quantity <= 0) {
+            _uiState.update { it.copy(error = "Please enter valid quantity") }
+            return
+        }
+
         _uiState.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             try {
                 val food = Food(
                     calories = calories,
-                    food_id = 0,
+                    food_id = foodId ?: 0,
                     name = foodName
                 )
 

@@ -109,7 +109,7 @@ class FoodRepository(private val foodService: FoodService) {
     }
 
     suspend fun getFoodByName(name: String): List<FoodItem> {
-        val response: Response<List<FoodResponse>> = try {
+        val response: Response<FoodListResponse> = try {
             foodService.getFoodByName(name)
         } catch (e: IOException) {
             throw IOException("Network error: ${e.message}", e)
@@ -117,8 +117,7 @@ class FoodRepository(private val foodService: FoodService) {
 
         if (response.isSuccessful) {
             val body = response.body() ?: throw IllegalStateException("Empty response body")
-            // Filter out any null `data` coming from the server
-            return body.mapNotNull { it.data }
+            return body.data
         } else {
             val err = response.errorBody()?.string()
             throw Exception(err ?: "Get food by name failed: ${response.code()}")

@@ -8,6 +8,7 @@ import com.example.alpvp.data.dto.FoodLogResponse
 import com.example.alpvp.data.dto.FoodLogsResponse
 import com.example.alpvp.data.dto.FoodResponse
 import com.example.alpvp.data.dto.FoodItem
+import com.example.alpvp.data.dto.FoodListResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.Header
@@ -56,5 +57,5 @@ interface FoodService {
     @GET("getfoodbyname/{name}")
     suspend fun getFoodByName(
         @Path("name") name: String
-    ): Response<List<FoodResponse>>
+    ): Response<FoodListResponse>
 }
