@@ -31,15 +31,17 @@ class AuthViewModel(
     init {
         viewModelScope.launch {
             userPreferencesRepository.authTokenFlow.collect { token ->
-                if (token != null) {
-                    userPreferencesRepository.userIdFlow.collect { userId ->
-                        _uiState.value = _uiState.value.copy(
-                            token = token,
-                            userId = userId,
-                            user = userId?.let { UserModel(id = it) }
-                        )
-                    }
-                }
+                _uiState.value = _uiState.value.copy(
+                    token = token
+                )
+            }
+        }
+        viewModelScope.launch {
+            userPreferencesRepository.userIdFlow.collect { userId ->
+                _uiState.value = _uiState.value.copy(
+                    userId = userId,
+                    user = userId?.let { UserModel(id = it) }
+                )
             }
         }
     }
@@ -50,7 +52,7 @@ class AuthViewModel(
             try {
                 val data = authRepository.loginUser(email.trim(), password)
 
-                userPreferencesRepository.saveAuth(data.token, data.userId!!)
+                userPreferencesRepository.saveAuth(data.token, data.userId)
 
                 _uiState.value = _uiState.value.copy(
                     loading = false,
@@ -82,7 +84,7 @@ class AuthViewModel(
                     bmiGoal = bmiGoal
                 )
 
-                userPreferencesRepository.saveAuth(data.token, data.userId!!)
+                userPreferencesRepository.saveAuth(data.token, data.userId)
 
                 _uiState.value = _uiState.value.copy(
                     loading = false,

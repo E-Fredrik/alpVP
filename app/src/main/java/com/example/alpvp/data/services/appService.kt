@@ -53,6 +53,15 @@ interface AppService {
         @Path("friendId") friendId: Int,
         @Body status: FriendStatusUpdate
     ): Friend
+    
+    // Notification Settings endpoints
+    @GET("api/notification-settings")
+    suspend fun getNotificationSettings(): retrofit2.Response<com.example.alpvp.data.dto.NotificationSettingsResponse>
+    
+    @PUT("api/notification-settings")
+    suspend fun updateNotificationSettings(
+        @Body settings: com.example.alpvp.data.dto.NotificationSettings
+    ): retrofit2.Response<com.example.alpvp.data.dto.NotificationSettingsResponse>
 }
 
 // Helper data classes for requests

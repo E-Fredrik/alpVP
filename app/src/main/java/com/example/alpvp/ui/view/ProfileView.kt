@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,10 +26,23 @@ import com.example.alpvp.ui.viewModel.AuthViewModel
 @Composable
 fun ProfileScreen(
     authViewModel: AuthViewModel,
+    dashboardViewModel: com.example.alpvp.ui.viewModel.DashboardViewModel,
     modifier: Modifier = Modifier
 ) {
-    val uiState by authViewModel.uiState.collectAsStateWithLifecycle()
+    val authUiState by authViewModel.uiState.collectAsStateWithLifecycle()
+    val dashboardUiState by dashboardViewModel.uiState.collectAsStateWithLifecycle()
     val bg = Brush.verticalGradient(listOf(Color(0xFFF3F7FB), Color(0xFFEFF4FB)))
+
+    // Load profile data if not already loaded
+    LaunchedEffect(authUiState.token) {
+        authUiState.token?.let { token ->
+            if (dashboardUiState.userProfile == null && !dashboardUiState.loading) {
+                dashboardViewModel.loadDashboardData(token)
+            }
+        }
+    }
+
+    val userProfile = dashboardUiState.userProfile
 
     Scaffold(
         topBar = {
@@ -80,53 +94,77 @@ fun ProfileScreen(
                         .shadow(4.dp, RoundedCornerShape(16.dp))
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = uiState.user?.name ?: "User",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = uiState.user?.email ?: "",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        if (dashboardUiState.loading) {
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Loading profile...", color = Color.Gray)
+                        } else {
+                            Text(
+                                text = userProfile?.username ?: "User",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = userProfile?.email ?: "",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.Gray
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                        Divider(color = Color.LightGray)
+                            Divider(color = Color.LightGray)
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                        // Stats (optional)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceAround
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = "${uiState.user?.heightCm ?: 0}",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 20.sp
-                                )
-                                Text("Height (cm)", color = Color.Gray, fontSize = 12.sp)
+                            // Stats
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceAround
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "${userProfile?.height ?: 0}",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 20.sp
+                                    )
+                                    Text("Height (cm)", color = Color.Gray, fontSize = 12.sp)
+                                }
+
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "%.1f".format(userProfile?.weight ?: 0.0),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 20.sp
+                                    )
+                                    Text("Weight (kg)", color = Color.Gray, fontSize = 12.sp)
+                                }
+
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "%.1f".format(userProfile?.bmiGoal ?: 0.0),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 20.sp
+                                    )
+                                    Text("BMI Goal", color = Color.Gray, fontSize = 12.sp)
+                                }
                             }
 
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = "${uiState.user?.weightLbs ?: 0}",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 20.sp
-                                )
-                                Text("Weight (lbs)", color = Color.Gray, fontSize = 12.sp)
-                            }
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = "${uiState.user?.goal ?: 0}",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 20.sp
-                                )
-                                Text("BMI Goal", color = Color.Gray, fontSize = 12.sp)
+                            // Current BMI
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "%.1f".format(userProfile?.bmi ?: 0.0),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 24.sp,
+                                        color = Color(0xFF4F8BFF)
+                                    )
+                                    Text("Current BMI", color = Color.Gray, fontSize = 12.sp)
+                                }
                             }
                         }
                     }

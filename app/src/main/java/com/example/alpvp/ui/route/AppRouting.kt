@@ -39,6 +39,7 @@ import com.example.alpvp.ui.view.RegisterScreen
 import com.example.alpvp.ui.viewModel.DashboardViewModel
 import com.example.alpvp.ui.viewModel.AuthViewModel
 import com.example.alpvp.ui.viewModel.FoodViewModel
+import com.example.alpvp.ui.viewModel.AARViewModel
 
 enum class AppScreens (val title: String, val icon: ImageVector?= null) {
     HOME("Home", Icons.Filled.Home),
@@ -120,6 +121,19 @@ fun AppRouting() {
         }
     )
 
+    // AARViewModel for activity and attention recognition
+    val aarViewModel: AARViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                if (modelClass.isAssignableFrom(AARViewModel::class.java)) {
+                    @Suppress("UNCHECKED_CAST")
+                    return AARViewModel(container.aarService) as T
+                }
+                throw IllegalArgumentException("Unknown ViewModel class")
+            }
+        }
+    )
+
     Scaffold(
         bottomBar = {
             BottomNavBar(
@@ -172,7 +186,10 @@ fun AppRouting() {
                      }
                  }
 
-                 DashboardScreen(dashboardViewModel = dashboardViewModel, onOpenFood = {})
+                 DashboardScreen(
+                     dashboardViewModel = dashboardViewModel,
+                     onOpenFood = { navController.navigate(AppScreens.FOOD.title) }
+                 )
              }
 
             composable(AppScreens.FOOD.title) {
@@ -226,7 +243,10 @@ fun AppRouting() {
                     }
                     Text("Redirecting to Login...")
                 } else {
-                    ProfileScreen(authViewModel = authViewModel)
+                    ProfileScreen(
+                        authViewModel = authViewModel,
+                        dashboardViewModel = dashboardViewModel
+                    )
                 }
             }
 

@@ -25,15 +25,23 @@ class DashboardViewModel(
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
     fun loadDashboardData(token: String) {
+        // Don't reload if already loading
+        if (_uiState.value.loading) return
+
         _uiState.value = _uiState.value.copy(loading = true, error = null)
         viewModelScope.launch {
             try {
+                android.util.Log.d("DashboardViewModel", "Loading dashboard data with token: ${token.take(10)}...")
+
                 val profileResult = dashboardRepository.getUserProfile(token)
                 val dashboardResult = dashboardRepository.getDashboardData(token)
                 
                 val profile = profileResult.getOrNull()
                 val dashboard = dashboardResult.getOrNull()
                 
+                android.util.Log.d("DashboardViewModel", "Profile loaded: ${profile != null}")
+                android.util.Log.d("DashboardViewModel", "Dashboard loaded: ${dashboard != null}")
+
                 if (profile != null && dashboard != null) {
                     _uiState.value = _uiState.value.copy(
                         loading = false,
@@ -41,16 +49,19 @@ class DashboardViewModel(
                         dashboardData = dashboard,
                         error = null
                     )
+                    android.util.Log.d("DashboardViewModel", "Data loaded successfully")
                 } else {
                     val errorMessage = profileResult.exceptionOrNull()?.message 
                         ?: dashboardResult.exceptionOrNull()?.message 
                         ?: "Failed to load data"
+                    android.util.Log.e("DashboardViewModel", "Error: $errorMessage")
                     _uiState.value = _uiState.value.copy(
                         loading = false,
                         error = errorMessage
                     )
                 }
             } catch (e: Exception) {
+                android.util.Log.e("DashboardViewModel", "Exception loading data", e)
                 _uiState.value = _uiState.value.copy(
                     loading = false,
                     error = e.message ?: "Unknown error occurred"

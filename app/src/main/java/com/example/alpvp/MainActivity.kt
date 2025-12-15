@@ -1,26 +1,86 @@
 package com.example.alpvp
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import com.example.alpvp.data.container.AppContainer
+import com.example.alpvp.data.services.NotificationScheduler
 import com.example.alpvp.ui.route.AppRouting
 import com.example.alpvp.ui.theme.AlpVPTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            Log.d("MainActivity", "Notification permission granted")
+            loadAndScheduleNotifications()
+        } else {
+            Log.d("MainActivity", "Notification permission denied")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Request notification permission for Android 13+
+        askNotificationPermission()
+        
         setContent {
             AlpVPTheme {
                 AppRouting()
+            }
+        }
+    }
+
+    private fun askNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                loadAndScheduleNotifications()
+            }
+        } else {
+            loadAndScheduleNotifications()
+        }
+    }
+
+    private fun loadAndScheduleNotifications() {
+        val appContainer = AppContainer(applicationContext)
+        lifecycleScope.launch {
+            try {
+                val response = appContainer.appService.getNotificationSettings()
+                if (response.isSuccessful && response.body() != null) {
+                    val settings = response.body()!!.data
+                    
+                    if (settings.notificationEnabled) {
+                        val scheduler = NotificationScheduler(applicationContext)
+                        scheduler.scheduleNotifications(
+                            breakfastTime = settings.breakfastTime,
+                            lunchTime = settings.lunchTime,
+                            dinnerTime = settings.dinnerTime,
+                            snackTime = settings.snackTime
+                        )
+                        Log.d("MainActivity", "Notifications scheduled successfully")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Failed to load notification settings", e)
             }
         }
     }

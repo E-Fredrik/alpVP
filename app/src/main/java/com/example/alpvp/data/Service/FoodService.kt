@@ -17,45 +17,40 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface FoodService {
-    @POST("createfood")
+    // Auth headers are automatically added by AuthInterceptor
+    
+    @POST("foods")
     suspend fun createFood(
         @Body food: FoodItem
     ): Response<FoodResponse>
 
-    @GET("getfood/{id}")
+    @GET("foods/{id}")
     suspend fun getFood(
         @Path("id") id: Int
     ): Response<FoodResponse>
 
-    // Requires Authorization header: pass "Bearer <token>"
-    @POST("foodinlogs")
-    suspend fun createFoodInLog(
-        @Header("Authorization") authorization: String,
-        @Body request: FoodInLogRequest
-    ): Response<FoodInLogResponse>
-
-    // Requires Authorization header: pass "Bearer <token>"
-    @POST("foodlogs")
-    suspend fun createFoodLog(
-        @Header("Authorization") authorization: String,
-        @Body request: FoodLogRequest
-    ): Response<FoodLogResponse>
-
-    // Requires Authorization header: pass "Bearer <token>"
-    @GET("foodlogs/{id}")
-    suspend fun getFoodLog(
-        @Header("Authorization") authorization: String,
-        @Path("id") id: Int
-    ): Response<FoodLogResponse>
-
-    @GET("foodlogs/user/{user_id}")
-    suspend fun getFoodLogsByUser(
-        @Header("Authorization") authorization: String,
-        @Path("user_id") userId: Int
-    ): Response<FoodLogsResponse>
-
-    @GET("getfoodbyname/{name}")
+    @GET("foods/name/{name}")
     suspend fun getFoodByName(
         @Path("name") name: String
     ): Response<FoodListResponse>
+
+    @POST("food-in-logs")
+    suspend fun createFoodInLog(
+        @Body request: FoodInLogRequest
+    ): Response<FoodInLogResponse>
+
+    @POST("food-logs")
+    suspend fun createFoodLog(
+        @Body request: FoodLogRequest
+    ): Response<FoodLogResponse>
+
+    @GET("food-logs/{id}")
+    suspend fun getFoodLog(
+        @Path("id") id: Int
+    ): Response<FoodLogResponse>
+
+    @GET("food-logs/user/{user_id}")
+    suspend fun getFoodLogsByUser(
+        @Path("user_id") userId: Int
+    ): Response<FoodLogsResponse>
 }

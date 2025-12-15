@@ -38,7 +38,8 @@ class FoodViewModel(
         _uiState.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             try {
-                val logs = foodRepository.getFoodLogByUser(token, userId)
+                // Token is automatically added by AuthInterceptor
+                val logs = foodRepository.getFoodLogByUser(userId)
                 _uiState.update { it.copy(loading = false, logs = logs) }
             } catch (t: Throwable) {
                 t.printStackTrace()
@@ -134,7 +135,8 @@ class FoodViewModel(
                     user_id = userId
                 )
 
-                foodRepository.createFoodLog(token, request)
+                // Token is automatically added by AuthInterceptor
+                foodRepository.createFoodLog(request)
 
                 _uiState.update { it.copy(loading = false, showAddDialog = false) }
                 loadFoodLogs()

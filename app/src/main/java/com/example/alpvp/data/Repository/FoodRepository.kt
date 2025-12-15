@@ -1,4 +1,3 @@
-// kotlin
 package com.example.alpvp.data.repository
 
 import com.example.alpvp.data.Service.FoodService
@@ -40,10 +39,10 @@ class FoodRepository(private val foodService: FoodService) {
         }
     }
 
-    suspend fun createFoodInLog(token: String, request: FoodInLogRequest): FoodInLogItem {
-        val authHeader = "Bearer $token"
+    suspend fun createFoodInLog(request: FoodInLogRequest): FoodInLogItem {
+        // Auth header is automatically added by AuthInterceptor
         val response: Response<FoodInLogResponse> = try {
-            foodService.createFoodInLog(authHeader, request)
+            foodService.createFoodInLog(request)
         } catch (e: IOException) {
             throw IOException("Network error: ${e.message}", e)
         }
@@ -57,10 +56,10 @@ class FoodRepository(private val foodService: FoodService) {
         }
     }
 
-    suspend fun createFoodLog(token: String, request: FoodLogRequest): FoodLogItem {
-        val authHeader = "Bearer $token"
+    suspend fun createFoodLog(request: FoodLogRequest): FoodLogItem {
+        // Auth header is automatically added by AuthInterceptor
         val response: Response<FoodLogResponse> = try {
-            foodService.createFoodLog(authHeader, request)
+            foodService.createFoodLog(request)
         } catch (e: IOException) {
             throw IOException("Network error: ${e.message}", e)
         }
@@ -74,10 +73,10 @@ class FoodRepository(private val foodService: FoodService) {
         }
     }
 
-    suspend fun getFoodLog(token: String, id: Int): FoodLogItem {
-        val authHeader = "Bearer $token"
+    suspend fun getFoodLog(id: Int): FoodLogItem {
+        // Auth header is automatically added by AuthInterceptor
         val response: Response<FoodLogResponse> = try {
-            foodService.getFoodLog(authHeader, id)
+            foodService.getFoodLog(id)
         } catch (e: IOException) {
             throw IOException("Network error: ${e.message}", e)
         }
@@ -91,10 +90,10 @@ class FoodRepository(private val foodService: FoodService) {
         }
     }
 
-    suspend fun getFoodLogByUser(token: String, userId: Int): List<FoodLogItem> {
-        val authHeader = "Bearer $token"
+    suspend fun getFoodLogByUser(userId: Int): List<FoodLogItem> {
+        // Auth header is automatically added by AuthInterceptor
         val response: Response<FoodLogsResponse> = try {
-            foodService.getFoodLogsByUser(authHeader, userId)
+            foodService.getFoodLogsByUser(userId)
         } catch (e: IOException) {
             throw IOException("Network error: ${e.message}", e)
         }

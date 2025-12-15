@@ -7,13 +7,9 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 
 interface DashboardService {
-    @GET("private/profile")
-    suspend fun getProfile(
-        @Header("Authorization") authorization: String
-    ): Response<UserProfileResponse>
+    @GET("api/profile")
+    suspend fun getProfile(): Response<UserProfileResponse>
 
-    @GET("private/dashboard")
-    suspend fun getDashboard(
-        @Header("Authorization") authorization: String
-    ): Response<DashboardResponse>
+    @GET("api/dashboard")
+    suspend fun getDashboard(): Response<DashboardResponse>
 }

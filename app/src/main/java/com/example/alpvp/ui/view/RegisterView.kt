@@ -1,7 +1,5 @@
-// kotlin
 package com.example.alpvp.ui.view
 
-import android.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape

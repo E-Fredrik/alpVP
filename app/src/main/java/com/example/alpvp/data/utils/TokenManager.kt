@@ -19,6 +19,11 @@ object TokenManager {
         return getPrefs(context).getString(KEY_TOKEN, null)
     }
     
+    fun getAuthHeader(context: Context): String? {
+        val token = getToken(context)
+        return token?.let { "Bearer $it" }
+    }
+    
     fun clearToken(context: Context) {
         getPrefs(context).edit().remove(KEY_TOKEN).apply()
     }
