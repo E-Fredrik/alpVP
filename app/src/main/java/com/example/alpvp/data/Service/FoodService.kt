@@ -41,7 +41,6 @@ interface FoodService {
         @Body request: FoodLogRequest
     ): Response<FoodLogResponse>
 
-    // Requires Authorization header: pass "Bearer <token>"
     @GET("foodlogs/{id}")
     suspend fun getFoodLog(
         @Header("Authorization") authorization: String,

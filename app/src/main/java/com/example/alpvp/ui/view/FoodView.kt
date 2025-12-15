@@ -29,6 +29,10 @@ import com.example.alpvp.data.dto.FoodLogItem
 import com.example.alpvp.ui.viewModel.FoodViewModel
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.text.compareTo
+import kotlin.text.get
+import kotlin.times
+import kotlin.toString
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -166,7 +170,7 @@ fun AddFoodDialog(
     onDismiss: () -> Unit
 ) {
     val uiState by foodViewModel.uiState.collectAsStateWithLifecycle()
-    var currentStage by remember { mutableStateOf("FOOD_NAME") }
+    var currentStage by remember { mutableStateOf("FOOD_LIST") }
     var selectedFood by remember { mutableStateOf<FoodItem?>(null) }
     var manualFoodName by remember { mutableStateOf("") }
     var manualCalories by remember { mutableStateOf("") }
@@ -174,7 +178,7 @@ fun AddFoodDialog(
 
     AlertDialog(
         onDismissRequest = {
-            currentStage = "FOOD_NAME"
+            currentStage = "FOOD_LIST"
             selectedFood = null
             manualFoodName = ""
             manualCalories = ""
@@ -188,18 +192,15 @@ fun AddFoodDialog(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                if (currentStage == "CALORIE_QUANTITY") {
-                    IconButton(onClick = {
-                        currentStage = "FOOD_NAME"
-                        selectedFood = null
-                    }) {
+                if (currentStage == "ADD_FOOD") {
+                    IconButton(onClick = { currentStage = "FOOD_LIST" }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 }
                 Text(
                     text = when (currentStage) {
-                        "FOOD_NAME" -> "Search Food"
-                        else -> "Add Details"
+                        "FOOD_LIST" -> "Add Food Log"
+                        else -> "Add Food Item"
                     },
                     fontWeight = FontWeight.Bold
                 )
@@ -207,71 +208,88 @@ fun AddFoodDialog(
         },
         text = {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 when (currentStage) {
-                    "FOOD_NAME" -> {
-                        OutlinedTextField(
-                            value = uiState.searchQuery,
-                            onValueChange = { foodViewModel.searchFood(it) },
-                            label = { Text("Food name") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
-                        )
-
-                        if (uiState.searchResults.isNotEmpty()) {
-                            Text(
-                                "Suggestions from database:",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Color.Gray
-                            )
+                    "FOOD_LIST" -> {
+                        if (uiState.selectedFoods.isNotEmpty()) {
+                            Text("Foods in this log:", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
                             Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .shadow(2.dp, RoundedCornerShape(12.dp)),
+                                modifier = Modifier.fillMaxWidth().shadow(2.dp, RoundedCornerShape(12.dp)),
                                 colors = CardDefaults.cardColors(containerColor = Color.White),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
-                                LazyColumn(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .heightIn(max = 200.dp)
-                                ) {
-                                    items(uiState.searchResults) { food ->
+                                LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp)) {
+                                    items(uiState.selectedFoods.size) { index ->
+                                        val entry = uiState.selectedFoods[index]
                                         ListItem(
-                                            headlineContent = { Text(food.name ?: "") },
-                                            supportingContent = { Text("${food.calories ?: 0} cal", color = Color.Gray) },
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clickable {
-                                                    selectedFood = food
-                                                    manualFoodName = food.name ?: ""
-                                                    manualCalories = food.calories?.toString() ?: ""
-                                                    currentStage = "CALORIE_QUANTITY"
+                                            headlineContent = { Text("${entry.name} x${entry.quantity}") },
+                                            supportingContent = { Text("${entry.calories * entry.quantity} cal", color = Color.Gray) },
+                                            trailingContent = {
+                                                IconButton(onClick = { foodViewModel.removeSelectedFood(index) }) {
+                                                    Icon(Icons.Default.Close, contentDescription = "Remove", tint = Color.Red)
                                                 }
+                                            }
                                         )
-                                        if (food != uiState.searchResults.last()) {
+                                        if (index < uiState.selectedFoods.size - 1) {
                                             HorizontalDivider()
                                         }
                                     }
                                 }
                             }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
+                        Button(
+                            onClick = { currentStage = "ADD_FOOD" },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F8BFF))
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Add Another Food", color = Color.White)
                         }
                     }
 
-                    else -> {
+                    "ADD_FOOD" -> {
+                        OutlinedTextField(
+                            value = uiState.searchQuery,
+                            onValueChange = { foodViewModel.searchFood(it) },
+                            label = { Text("Search food") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        if (uiState.searchResults.isNotEmpty()) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth().shadow(2.dp, RoundedCornerShape(12.dp)),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 150.dp)) {
+                                    items(uiState.searchResults) { food ->
+                                        ListItem(
+                                            headlineContent = { Text(food.name ?: "") },
+                                            supportingContent = { Text("${food.calories ?: 0} cal", color = Color.Gray) },
+                                            modifier = Modifier.fillMaxWidth().clickable {
+                                                selectedFood = food
+                                                manualFoodName = food.name ?: ""
+                                                manualCalories = food.calories?.toString() ?: ""
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
                         OutlinedTextField(
                             value = manualFoodName,
-                            onValueChange = {},
+                            onValueChange = { manualFoodName = it },
                             label = { Text("Food name") },
                             modifier = Modifier.fillMaxWidth(),
-                            readOnly = true,
-                            enabled = false,
                             shape = RoundedCornerShape(12.dp)
                         )
 
@@ -279,11 +297,7 @@ fun AddFoodDialog(
                             value = manualCalories,
                             onValueChange = { manualCalories = it.filter { ch -> ch.isDigit() } },
                             label = { Text("Calories") },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number,
-                                imeAction = ImeAction.Next
-                            ),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
                         )
@@ -292,11 +306,7 @@ fun AddFoodDialog(
                             value = quantity,
                             onValueChange = { quantity = it.filter { ch -> ch.isDigit() } },
                             label = { Text("Quantity") },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number,
-                                imeAction = ImeAction.Done
-                            ),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
                         )
@@ -304,40 +314,27 @@ fun AddFoodDialog(
                 }
 
                 if (uiState.error != null) {
-                    Text(
-                        text = uiState.error ?: "",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text(uiState.error ?: "", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
 
                 if (uiState.loading) {
-                    LinearProgressIndicator(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = Color(0xFF4F8BFF)
-                    )
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), color = Color(0xFF4F8BFF))
                 }
             }
         },
         confirmButton = {
             when (currentStage) {
-                "FOOD_NAME" -> {
+                "FOOD_LIST" -> {
                     Button(
-                        onClick = {
-                            if (uiState.searchQuery.isNotBlank()) {
-                                manualFoodName = uiState.searchQuery.trim()
-                                manualCalories = ""
-                                currentStage = "CALORIE_QUANTITY"
-                            }
-                        },
-                        enabled = uiState.searchQuery.isNotBlank(),
+                        onClick = { foodViewModel.submitFoodLog() },
+                        enabled = uiState.selectedFoods.isNotEmpty() && !uiState.loading,
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F8BFF))
                     ) {
-                        Text("Next", color = Color.White)
+                        Text("Submit Log", color = Color.White)
                     }
                 }
-                else -> {
+                "ADD_FOOD" -> {
                     Button(
                         onClick = {
                             foodViewModel.addFoodLog(
@@ -346,24 +343,24 @@ fun AddFoodDialog(
                                 quantity = quantity.toIntOrNull() ?: 1,
                                 foodId = selectedFood?.id
                             )
-                            currentStage = "FOOD_NAME"
+                            currentStage = "FOOD_LIST"
                             selectedFood = null
                             manualFoodName = ""
                             manualCalories = ""
                             quantity = "1"
                         },
-                        enabled = !uiState.loading && manualCalories.isNotBlank() && manualCalories.toIntOrNull() != null,
+                        enabled = manualFoodName.isNotBlank() && manualCalories.isNotBlank(),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F8BFF))
                     ) {
-                        Text("Add", color = Color.White)
+                        Text("Add to Log", color = Color.White)
                     }
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = {
-                currentStage = "FOOD_NAME"
+                currentStage = "FOOD_LIST"
                 selectedFood = null
                 manualFoodName = ""
                 manualCalories = ""
@@ -374,14 +371,8 @@ fun AddFoodDialog(
             }
         }
     )
-
-    LaunchedEffect(uiState.error) {
-        if (uiState.error != null) {
-            kotlinx.coroutines.delay(3000)
-            foodViewModel.clearError()
-        }
-    }
 }
+
 
 private fun formatTimestamp(timestamp: Long): String {
     val sdf = SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault())

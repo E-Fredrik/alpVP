@@ -1,4 +1,3 @@
-// kotlin
 package com.example.alpvp.data.Repository
 
 import com.example.alpvp.data.Service.FoodService
@@ -17,12 +16,14 @@ class FoodRepository(private val foodService: FoodService) {
 
         if (response.isSuccessful) {
             val body = response.body() ?: throw IllegalStateException("Empty response body")
+//            Log.d("FoodRepository", "Created food: ${body.data}")
             return body.data
         } else {
             val err = response.errorBody()?.string()
             throw Exception(err ?: "Create food failed: ${response.code()}")
         }
     }
+
 
     suspend fun getFoodItem(id: Int): FoodItem {
         val response: Response<FoodResponse> = try {
@@ -123,5 +124,4 @@ class FoodRepository(private val foodService: FoodService) {
             throw Exception(err ?: "Get food by name failed: ${response.code()}")
         }
     }
-
 }
