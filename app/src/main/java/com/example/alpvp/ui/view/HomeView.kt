@@ -27,6 +27,7 @@ import com.example.alpvp.data.dto.RecentFoodLog
 import com.example.alpvp.data.dto.FoodInRecentLog
 import com.example.alpvp.data.dto.WeeklyProgressItem
 import com.example.alpvp.data.dto.FriendFoodLog
+import java.util.Calendar
 
 @Composable
 fun DashboardScreen(
@@ -56,8 +57,21 @@ private fun DashboardScreenContent(
     }
 
     val todayCalories = uiState.dashboardData?.todayCalories ?: 0
-    val caloriesGoal = 2200
-    val caloriesRemaining = caloriesGoal - todayCalories
+    // Try to obtain a calorie goal from the server-side data if available. If not, leave null and
+    // show consumed calories instead of a remaining amount.
+    val caloriesGoal: Int? = uiState.dashboardData?.let { /* no calorie goal in DashboardData */ null }
+    val caloriesRemaining = caloriesGoal?.let { it - todayCalories }
+    // display text for remaining or overage; defined early so UI blocks can reference it
+    val remainingText = caloriesRemaining?.let { if (it >= 0) "${it}" else "Over by ${-it}" } ?: "-"
+
+    // helper for same-day check (works on lower API levels)
+    fun isSameDay(ts: Long): Boolean {
+        val now = Calendar.getInstance()
+        val then = Calendar.getInstance()
+        then.timeInMillis = ts
+        return now.get(Calendar.YEAR) == then.get(Calendar.YEAR) &&
+            now.get(Calendar.DAY_OF_YEAR) == then.get(Calendar.DAY_OF_YEAR)
+    }
 
     // Convert recent food logs from API to UI model
     val recentFoodLogs = uiState.userProfile?.recentFoodLogs?.flatMap { log ->
@@ -147,27 +161,19 @@ private fun DashboardScreenContent(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // Two-column layout: left = Remaining calories, right = % of daily goal with progress bar
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // Left: Remaining calories — `remainingText` computed above
+                    Column(horizontalAlignment = Alignment.Start) {
                         Text(
-                            text = "$todayCalories",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Gray900
-                        )
-                        Text(
-                            text = "Eaten",
-                            fontSize = 12.sp,
-                            color = Gray500
-                        )
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "$caloriesRemaining",
-                            fontSize = 20.sp,
+                            text = remainingText,
+                            fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Gray900
                         )
@@ -177,17 +183,130 @@ private fun DashboardScreenContent(
                             color = Gray500
                         )
                     }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+                    // Right: Meals summary — more actionable than a redundant small chart
+                    // Compute meals today, avg calories per meal, largest meal and last meal
+                    val logs = uiState.userProfile?.recentFoodLogs ?: emptyList()
+                    val todayLogs = logs.filter { log -> isSameDay(log.timestamp) }
+                    val mealsToday = todayLogs.size
+
+                    val mealCaloriesList = todayLogs.map { log -> log.foods.sumOf { it.calories } }
+                    val totalCaloriesFromLogs = mealCaloriesList.sum()
+                    val avgCaloriesPerMeal = if (mealsToday > 0) (totalCaloriesFromLogs / mealsToday) else 0
+
+                    val largestMealIndex = mealCaloriesList.indices.maxByOrNull { mealCaloriesList[it] }
+                    val largestMealText = largestMealIndex?.let { idx ->
+                        val log = todayLogs[idx]
+                        val name = log.foods.firstOrNull()?.foodName ?: "Meal"
+                        "${name} • ${mealCaloriesList[idx]} cal"
+                    } ?: "-"
+
+                    val lastLog = todayLogs.maxByOrNull { it.timestamp } ?: logs.maxByOrNull { it.timestamp }
+                    val lastMealText = lastLog?.let { log ->
+                        val name = log.foods.firstOrNull()?.foodName ?: "Meal"
+                        val minutes = ((System.currentTimeMillis() - log.timestamp) / 60000).toInt()
+                        val timeAgo = when {
+                            minutes < 60 -> "$minutes min ago"
+                            minutes < 120 -> "1 hour ago"
+                            else -> "${minutes / 60} hours ago"
+                        }
+                        "${name} • ${log.foods.sumOf { it.calories }} cal • $timeAgo"
+                    } ?: "-"
+
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        modifier = Modifier.fillMaxWidth(0.6f)
+                    ) {
+                        // Actionable recommendation based on remaining calories
+                        val recommendation = if (caloriesGoal != null && caloriesRemaining != null) {
+                            when {
+                                caloriesRemaining < 0 -> "You've exceeded your daily goal by ${-caloriesRemaining} cal. Consider a light walk or a lighter dinner."
+                                caloriesRemaining <= 300 -> "You're close to your goal. Keep portions light for the next meal."
+                                else -> "You're ${caloriesRemaining} cal under your goal — consider a balanced snack if needed."
+                            }
+                        } else {
+                            // No calorie goal known — provide general consumption feedback
+                            when {
+                                todayCalories == 0 -> "No calories logged yet. Add your first meal to get started."
+                                todayCalories < 800 -> "You've logged ${todayCalories} cal so far — keep balanced choices."
+                                else -> "You've logged ${todayCalories} cal so far today."
+                            }
+                        }
+
                         Text(
-                            text = "$caloriesGoal",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Gray900
-                        )
-                        Text(
-                            text = "Goal",
+                            text = recommendation,
                             fontSize = 12.sp,
-                            color = Gray500
+                            color = Gray700,
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 2
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Meal timeline (today's meals) — small chips with time and calories
+                        val timelineLogs = todayLogs.takeLast(4)
+                        if (timelineLogs.isNotEmpty()) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                timelineLogs.forEach { log ->
+                                    val minutes = ((System.currentTimeMillis() - log.timestamp) / 60000).toInt()
+                                    val timeLabel = when {
+                                        minutes < 60 -> "${minutes}m ago"
+                                        minutes < 120 -> "1h ago"
+                                        else -> "${minutes / 60}h ago"
+                                    }
+                                    val calSum = log.foods.sumOf { it.calories }
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = BackgroundLight,
+                                        tonalElevation = 0.dp
+                                    ) {
+                                        Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                            Text(text = timeLabel, fontSize = 12.sp, color = Gray700)
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(text = "${calSum} cal", fontSize = 12.sp, color = Gray600)
+                                        }
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(10.dp))
+                        }
+
+                        // Summary: meals count, avg cal, largest and last meal
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    text = "Meals: ${mealsToday}",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Gray900
+                                )
+                                Text(
+                                    text = "Avg: ${avgCaloriesPerMeal} cal",
+                                    fontSize = 12.sp,
+                                    color = Gray500,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(
+                            text = "Largest: $largestMealText",
+                            fontSize = 12.sp,
+                            color = Gray600,
+                            modifier = Modifier.align(Alignment.End)
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Last: $lastMealText",
+                            fontSize = 12.sp,
+                            color = Gray600,
+                            modifier = Modifier.align(Alignment.End)
                         )
                     }
                 }

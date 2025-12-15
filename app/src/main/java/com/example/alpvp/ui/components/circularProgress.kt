@@ -26,14 +26,14 @@ import kotlin.math.min
 @Composable
 fun CircularProgress(
     current: Int,
-    goal: Int,
+    goal: Int? = null,
+    modifier: Modifier = Modifier,
     size: Dp = 180.dp,
     strokeWidth: Dp = 16.dp,
     progressColor: Color = MaterialTheme.colorScheme.primary,
     backgroundColor: Color = Gray200,
-    modifier: Modifier = Modifier
 ) {
-    val percentage = if (goal > 0) min((current.toFloat() / goal.toFloat()) * 100, 100f) else 0f
+    val percentage = if (goal != null && goal > 0) min((current.toFloat() / goal.toFloat()) * 100, 100f) else 0f
     val animatedPercentage by animateFloatAsState(
         targetValue = percentage,
         animationSpec = tween(durationMillis = 1000),
@@ -45,38 +45,64 @@ fun CircularProgress(
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.size(size)) {
-            // Background circle
+            // Ensure both background circle and arc share the same bounding box so strokes align
+            val canvasSizePx = size.toPx()
+            val strokePx = strokeWidth.toPx()
+            val diameter = canvasSizePx - strokePx
+            val topLeft = androidx.compose.ui.geometry.Offset(strokePx / 2f, strokePx / 2f)
+            val arcSize = androidx.compose.ui.geometry.Size(diameter, diameter)
+            val radius = diameter / 2f
+
+            // Background circle (centered inside the stroke inset)
             drawCircle(
                 color = backgroundColor,
-                radius = size.toPx() / 2 - strokeWidth.toPx() / 2,
-                style = Stroke(width = strokeWidth.toPx())
+                radius = radius,
+                center = center,
+                style = Stroke(width = strokePx)
             )
 
-            // Progress arc
+            // Progress arc using the same inset bounding box
             val sweepAngle = (animatedPercentage / 100f) * 360f
             drawArc(
                 color = progressColor,
                 startAngle = -90f,
                 sweepAngle = sweepAngle,
                 useCenter = false,
-                style = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
+                topLeft = topLeft,
+                size = arcSize,
+                style = Stroke(width = strokePx, cap = StrokeCap.Round)
             )
         }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "${goal - current}",
-                fontSize = 40.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                text = "calories left",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-            )
+            if (goal != null && goal > 0) {
+                val remaining = (goal - current).coerceAtLeast(0)
+                Text(
+                    text = "${remaining}",
+                    fontSize = 40.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "calories left",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+            } else {
+                Text(
+                    text = "${current} cal",
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "consumed",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+            }
         }
     }
 }

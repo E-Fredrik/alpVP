@@ -16,7 +16,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class AppContainer {
     companion object {
-        val BASE_URL = "http://10.0.2.2:3000/api/"
+        val BASE_URL = "http://10.152.62.60:3000/api/"
     }
 
     private val retrofit = Retrofit.Builder()

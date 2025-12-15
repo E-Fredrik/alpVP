@@ -22,6 +22,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.alpvp.R
 import com.example.alpvp.ui.viewModel.AuthViewModel
 import kotlinx.coroutines.launch
 
@@ -83,8 +84,8 @@ fun LoginScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Image(
-                                painter = painterResource(id = R.drawable.ic_menu_myplaces),
-                                contentDescription = null,
+                                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                                contentDescription = "App logo",
                                 modifier = Modifier.size(32.dp)
                             )
                         }
@@ -181,9 +182,9 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Divider(modifier = Modifier.weight(1f), color = Color(0xFFDEE7F4))
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFDEE7F4))
                     Text("  or  ", color = Color.Gray)
-                    Divider(modifier = Modifier.weight(1f), color = Color(0xFFDEE7F4))
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFDEE7F4))
                 }
 
                 Spacer(modifier = Modifier.height(22.dp))

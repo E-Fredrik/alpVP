@@ -2,7 +2,7 @@ package com.example.alpvp.ui.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alpvp.data.Repository.FoodRepository
+import com.example.alpvp.data.repository.FoodRepository
 import com.example.alpvp.data.dto.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
