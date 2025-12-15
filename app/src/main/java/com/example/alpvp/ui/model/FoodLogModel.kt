@@ -1,12 +1,10 @@
 package com.example.alpvp.ui.model
 
-import java.util.Date
-
-class FoodLogModel {
-    val userId: Int? = null
-    val timestamp: Date? = null
-    val latitude: Double? = null
-    val longitude: Double? = null
-    val logId: Int? = null
-    val foodInLogs: List<FoodInLogModel>? = null
-}
+data class FoodLogModel(
+    val logId: Int,
+    val userId: Int,
+    val timestamp: Long,
+    val latitude: Double,
+    val longitude: Double,
+    val foodInLogs: List<FoodInLogItemModel>
+)

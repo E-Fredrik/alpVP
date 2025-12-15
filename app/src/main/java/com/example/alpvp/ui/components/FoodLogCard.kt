@@ -18,12 +18,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.alpvp.data.dto.FoodLogItem
+import com.example.alpvp.ui.model.FoodLogModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @Composable
-fun FoodLogCard(log: FoodLogItem) {
+fun FoodLogCard(log: FoodLogModel) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -38,11 +39,11 @@ fun FoodLogCard(log: FoodLogItem) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = formatTimestamp(log.timestamp ?: 0L),
+                    text = formatTimestamp(log.timestamp),
                     style = MaterialTheme.typography.labelMedium,
                     color = Color.Gray
                 )
-                val totalCals = log.foodInLogs?.sumOf { it.calories ?: 0 } ?: 0
+                val totalCals = log.foodInLogs.sumOf { it.calories }
                 Text(
                     text = "$totalCals cal",
                     style = MaterialTheme.typography.titleMedium,
@@ -53,7 +54,7 @@ fun FoodLogCard(log: FoodLogItem) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            log.foodInLogs?.forEach { food ->
+            log.foodInLogs.forEach { food ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -61,13 +62,13 @@ fun FoodLogCard(log: FoodLogItem) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = food.food.name ?: "Unknown",
+                        text = food.name,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = "${food.calories ?: 0} cal",
+                        text = "${food.calories} cal",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color(0xFF0F1724)
                     )
@@ -76,6 +77,7 @@ fun FoodLogCard(log: FoodLogItem) {
         }
     }
 }
+
 
 private fun formatTimestamp(timestamp: Long): String {
     val sdf = SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault())

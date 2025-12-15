@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.alpvp.data.dto.FoodItem
 import com.example.alpvp.ui.viewModel.FoodViewModel
+import kotlin.text.get
+import com.example.alpvp.ui.model.FoodModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +57,7 @@ fun AddFoodDialog(
 ) {
     val uiState by foodViewModel.uiState.collectAsStateWithLifecycle()
     var currentStage by remember { mutableStateOf("FOOD_LIST") }
-    var selectedFood by remember { mutableStateOf<FoodItem?>(null) }
+    var selectedFood by remember { mutableStateOf<FoodModel?>(null) }
     var manualFoodName by remember { mutableStateOf("") }
     var manualCalories by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf("1") }
@@ -83,8 +85,8 @@ fun AddFoodDialog(
                 }
                 Text(
                     text = when (currentStage) {
-                        "FOOD_LIST" -> "Add Food Log"
-                        else -> "Add Food Item"
+                        "ADD_FOOD" -> "Add Food"
+                        else -> "Food Log"
                     },
                     fontWeight = FontWeight.Bold
                 )
@@ -98,42 +100,27 @@ fun AddFoodDialog(
                 when (currentStage) {
                     "FOOD_LIST" -> {
                         if (uiState.selectedFoods.isNotEmpty()) {
-                            Text("Foods in this log:", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
-                            Card(
-                                modifier = Modifier.fillMaxWidth().shadow(2.dp, RoundedCornerShape(12.dp)),
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp)) {
-                                    items(uiState.selectedFoods.size) { index ->
-                                        val entry = uiState.selectedFoods[index]
-                                        ListItem(
-                                            headlineContent = { Text("${entry.name} x${entry.quantity}") },
-                                            supportingContent = { Text("${entry.calories * entry.quantity} cal", color = Color.Gray) },
-                                            trailingContent = {
-                                                IconButton(onClick = { foodViewModel.removeSelectedFood(index) }) {
-                                                    Icon(Icons.Default.Close, contentDescription = "Remove", tint = Color.Red)
-                                                }
-                                            }
-                                        )
-                                        if (index < uiState.selectedFoods.size - 1) {
-                                            HorizontalDivider()
+                            LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp)) {
+                                items(uiState.selectedFoods.size) { index ->
+                                    val entry = uiState.selectedFoods[index]
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(entry.name, fontWeight = FontWeight.Medium)
+                                            Text("${entry.calories} cal × ${entry.quantity}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                                        }
+                                        IconButton(onClick = { foodViewModel.removeSelectedFood(index) }) {
+                                            Icon(Icons.Default.Close, contentDescription = "Remove", tint = Color.Red)
                                         }
                                     }
+                                    HorizontalDivider()
                                 }
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-
-                        Button(
-                            onClick = { currentStage = "ADD_FOOD" },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F8BFF))
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Add Another Food", color = Color.White)
+                        } else {
+                            Text("No foods added yet", color = Color.Gray)
                         }
                     }
 
@@ -159,12 +146,12 @@ fun AddFoodDialog(
                                 LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 150.dp)) {
                                     items(uiState.searchResults) { food ->
                                         ListItem(
-                                            headlineContent = { Text(food.name ?: "") },
-                                            supportingContent = { Text("${food.calories ?: 0} cal", color = Color.Gray) },
+                                            headlineContent = { Text(food.name) },
+                                            supportingContent = { Text("${food.calories} cal", color = Color.Gray) },
                                             modifier = Modifier.fillMaxWidth().clickable {
                                                 selectedFood = food
-                                                manualFoodName = food.name ?: ""
-                                                manualCalories = food.calories?.toString() ?: ""
+                                                manualFoodName = food.name
+                                                manualCalories = food.calories.toString()
                                             }
                                         )
                                     }
@@ -204,35 +191,44 @@ fun AddFoodDialog(
         confirmButton = {
             when (currentStage) {
                 "FOOD_LIST" -> {
-                    Button(
-                        onClick = { foodViewModel.submitFoodLog() },
-                        enabled = uiState.selectedFoods.isNotEmpty() && !uiState.loading,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F8BFF))
-                    ) {
-                        Text("Submit Log", color = Color.White)
+                    Row {
+                        Button(
+                            onClick = { currentStage = "ADD_FOOD" },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F8BFF))
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Add Food")
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = { foodViewModel.submitFoodLog() },
+                            enabled = uiState.selectedFoods.isNotEmpty() && !uiState.loading,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F8BFF))
+                        ) {
+                            Text("Submit")
+                        }
                     }
                 }
                 "ADD_FOOD" -> {
                     Button(
                         onClick = {
-                            foodViewModel.addFoodLog(
-                                foodName = manualFoodName,
-                                calories = manualCalories.toIntOrNull() ?: 0,
-                                quantity = quantity.toIntOrNull() ?: 1,
-                                foodId = selectedFood?.id
-                            )
-                            currentStage = "FOOD_LIST"
-                            selectedFood = null
-                            manualFoodName = ""
-                            manualCalories = ""
-                            quantity = "1"
+                            val name = manualFoodName.trim()
+                            val cals = manualCalories.toIntOrNull() ?: 0
+                            val qty = quantity.toIntOrNull() ?: 1
+                            if (name.isNotEmpty() && cals > 0 && qty > 0) {
+                                foodViewModel.addFoodLog(name, cals, qty, selectedFood?.id)
+                                currentStage = "FOOD_LIST"
+                                selectedFood = null
+                                manualFoodName = ""
+                                manualCalories = ""
+                                quantity = "1"
+                            }
                         },
-                        enabled = manualFoodName.isNotBlank() && manualCalories.isNotBlank(),
-                        shape = RoundedCornerShape(12.dp),
+                        enabled = manualFoodName.isNotBlank() && manualCalories.toIntOrNull() != null && quantity.toIntOrNull() != null,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F8BFF))
                     ) {
-                        Text("Add to Log", color = Color.White)
+                        Text("Add")
                     }
                 }
             }

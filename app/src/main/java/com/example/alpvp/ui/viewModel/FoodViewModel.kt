@@ -5,17 +5,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alpvp.data.Repository.FoodRepository
 import com.example.alpvp.data.dto.*
+import com.example.alpvp.ui.model.FoodLogModel
+import com.example.alpvp.ui.model.FoodInLogItemModel
+import com.example.alpvp.ui.model.FoodModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.times
 
 data class FoodUiState(
     val loading: Boolean = false,
-    val logs: List<FoodLogItem> = emptyList(),
+    val logs: List<FoodLogModel> = emptyList(),
     val searchQuery: String = "",
-    val searchResults: List<FoodItem> = emptyList(),
+    val searchResults: List<FoodModel> = emptyList(),
     val showAddDialog: Boolean = false,
     val selectedFoods: List<SelectedFoodEntry> = emptyList(),
     val error: String? = null
@@ -41,11 +43,39 @@ class FoodViewModel(
         loadFoodLogs()
     }
 
+    private fun mapToFoodLogModel(dto: FoodLogItem): FoodLogModel {
+        return FoodLogModel(
+            logId = dto.log_id,
+            userId = dto.user_id,
+            timestamp = dto.timestamp,
+            latitude = dto.latitude,
+            longitude = dto.longitude,
+            foodInLogs = dto.foodInLogs.map { foodInLog ->
+                FoodInLogItemModel(
+                    id = foodInLog.id,
+                    foodId = foodInLog.food_id,
+                    name = foodInLog.food.name,
+                    calories = foodInLog.calories,
+                    quantity = foodInLog.quantity
+                )
+            }
+        )
+    }
+
+    private fun mapToFoodModel(dto: FoodItem): FoodModel {
+        return FoodModel(
+            id = dto.id,
+            name = dto.name ?: "",
+            calories = dto.calories ?: 0
+        )
+    }
+
     private fun loadFoodLogs() {
         _uiState.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             try {
                 val logs = foodRepository.getFoodLogByUser(token, userId)
+                    .map { mapToFoodLogModel(it) }
                 _uiState.update { it.copy(loading = false, logs = logs) }
             } catch (t: Throwable) {
                 t.printStackTrace()
@@ -66,6 +96,13 @@ class FoodViewModel(
         viewModelScope.launch {
             try {
                 val results = foodRepository.getFoodByName(trimmed)
+                    .mapNotNull { dto ->
+                        if (dto.name != null && dto.calories != null) {
+                            mapToFoodModel(dto)
+                        } else {
+                            null
+                        }
+                    }
                 _uiState.update { it.copy(searchResults = results) }
             } catch (t: Throwable) {
                 t.printStackTrace()
@@ -74,6 +111,7 @@ class FoodViewModel(
             }
         }
     }
+
 
     fun addFoodLog(foodName: String, calories: Int, quantity: Int, foodId: Int?) {
         val current = _uiState.value.selectedFoods.toMutableList()
@@ -101,7 +139,6 @@ class FoodViewModel(
 
                 for (entry in selected) {
                     val foodId = if (entry.foodId == null) {
-                        // Create new food first
                         val foodItem = FoodItem(
                             id = null,
                             name = entry.name,
@@ -109,7 +146,6 @@ class FoodViewModel(
                         )
                         val createdFood = foodRepository.createFood(foodItem)
 
-                        // Add null-safety check
                         if (createdFood.id == null) {
                             throw IllegalStateException("Created food has no ID for: ${entry.name}")
                         }
@@ -159,12 +195,6 @@ class FoodViewModel(
             }
         }
     }
-
-
-
-
-
-
 
     fun toggleAddDialog(show: Boolean) {
         _uiState.update {
