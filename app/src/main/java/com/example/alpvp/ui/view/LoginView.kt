@@ -189,7 +189,11 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(22.dp))
 
-                Row {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text("Don't have an account?", color = Color.Gray)
                     Spacer(modifier = Modifier.width(6.dp))
                     TextButton(onClick = { onNavigateToSignUp() }) {

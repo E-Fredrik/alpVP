@@ -1,24 +1,33 @@
 package com.example.alpvp.ui.viewModel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alpvp.data.repository.FoodRepository
+import com.example.alpvp.data.Repository.FoodRepository
 import com.example.alpvp.data.dto.*
+import com.example.alpvp.ui.model.FoodLogModel
+import com.example.alpvp.ui.model.FoodInLogItemModel
+import com.example.alpvp.ui.model.FoodModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import android.util.Log
 
 data class FoodUiState(
     val loading: Boolean = false,
-    val logs: List<FoodLogItem> = emptyList(),
+    val logs: List<FoodLogModel> = emptyList(),
     val searchQuery: String = "",
-    val searchResults: List<FoodItem> = emptyList(),
+    val searchResults: List<FoodModel> = emptyList(),
     val showAddDialog: Boolean = false,
-    val showManualEntry: Boolean = false,
-    val selectedFood: FoodItem? = null,
+    val selectedFoods: List<SelectedFoodEntry> = emptyList(),
     val error: String? = null
+)
+
+data class SelectedFoodEntry(
+    val foodId: Int?,
+    val name: String,
+    val calories: Int,
+    val quantity: Int
 )
 
 class FoodViewModel(
@@ -34,12 +43,39 @@ class FoodViewModel(
         loadFoodLogs()
     }
 
+    private fun mapToFoodLogModel(dto: FoodLogItem): FoodLogModel {
+        return FoodLogModel(
+            logId = dto.log_id,
+            userId = dto.user_id,
+            timestamp = dto.timestamp,
+            latitude = dto.latitude,
+            longitude = dto.longitude,
+            foodInLogs = dto.foodInLogs.map { foodInLog ->
+                FoodInLogItemModel(
+                    id = foodInLog.id,
+                    foodId = foodInLog.food_id,
+                    name = foodInLog.food.name,
+                    calories = foodInLog.calories,
+                    quantity = foodInLog.quantity
+                )
+            }
+        )
+    }
+
+    private fun mapToFoodModel(dto: FoodItem): FoodModel {
+        return FoodModel(
+            id = dto.id,
+            name = dto.name ?: "",
+            calories = dto.calories ?: 0
+        )
+    }
+
     private fun loadFoodLogs() {
         _uiState.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             try {
-                // Token is automatically added by AuthInterceptor
-                val logs = foodRepository.getFoodLogByUser(userId)
+                val logs = foodRepository.getFoodLogByUser(token, userId)
+                    .map { mapToFoodLogModel(it) }
                 _uiState.update { it.copy(loading = false, logs = logs) }
             } catch (t: Throwable) {
                 t.printStackTrace()
@@ -48,8 +84,6 @@ class FoodViewModel(
             }
         }
     }
-
-
 
     fun searchFood(query: String) {
         _uiState.update { it.copy(searchQuery = query, error = null) }
@@ -62,6 +96,13 @@ class FoodViewModel(
         viewModelScope.launch {
             try {
                 val results = foodRepository.getFoodByName(trimmed)
+                    .mapNotNull { dto ->
+                        if (dto.name != null && dto.calories != null) {
+                            mapToFoodModel(dto)
+                        } else {
+                            null
+                        }
+                    }
                 _uiState.update { it.copy(searchResults = results) }
             } catch (t: Throwable) {
                 t.printStackTrace()
@@ -72,79 +113,98 @@ class FoodViewModel(
     }
 
 
-    fun selectFood(food: FoodItem) {
-        _uiState.update {
-            it.copy(
-                selectedFood = food,
-                searchQuery = food.name ?: "",
-                searchResults = emptyList()
-            )
-        }
+    fun addFoodLog(foodName: String, calories: Int, quantity: Int, foodId: Int?) {
+        val current = _uiState.value.selectedFoods.toMutableList()
+        current.add(SelectedFoodEntry(foodId, foodName, calories, quantity))
+        _uiState.update { it.copy(selectedFoods = current) }
     }
 
-    fun showManualEntry() {
-        _uiState.update { it.copy(showManualEntry = true, selectedFood = null) }
+    fun removeSelectedFood(index: Int) {
+        val current = _uiState.value.selectedFoods.toMutableList()
+        current.removeAt(index)
+        _uiState.update { it.copy(selectedFoods = current) }
     }
 
-    fun toggleAddDialog(show: Boolean) {
-        _uiState.update {
-            it.copy(
-                showAddDialog = show,
-                searchQuery = "",
-                searchResults = emptyList(),
-                selectedFood = null,
-                showManualEntry = false,
-                error = null
-            )
-        }
-        if (!show) {
-            loadFoodLogs()
-        }
-    }
-
-    fun addFoodLog(foodName: String, calories: Int, quantity: Int, foodId: Int? = null) {
-        if (foodName.isBlank()) {
-            _uiState.update { it.copy(error = "Food name cannot be empty") }
-            return
-        }
-
-        if (calories <= 0) {
-            _uiState.update { it.copy(error = "Please enter valid calories") }
-            return
-        }
-
-        if (quantity <= 0) {
-            _uiState.update { it.copy(error = "Please enter valid quantity") }
+    fun submitFoodLog() {
+        val selected = _uiState.value.selectedFoods
+        if (selected.isEmpty()) {
+            _uiState.update { it.copy(error = "Please add at least one food") }
             return
         }
 
         _uiState.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             try {
-                val food = Food(
-                    calories = calories,
-                    food_id = foodId ?: 0,
-                    name = foodName
-                )
+                val foodRequests = mutableListOf<FoodInLogRequest>()
 
-                val request = FoodLogRequest(
-                    foods = listOf(food),
-                    latitude = 0.0,
-                    longitude = 0.0,
+                for (entry in selected) {
+                    val foodId = if (entry.foodId == null) {
+                        val foodItem = FoodItem(
+                            id = null,
+                            name = entry.name,
+                            calories = entry.calories
+                        )
+                        val createdFood = foodRepository.createFood(foodItem)
+
+                        if (createdFood.id == null) {
+                            throw IllegalStateException("Created food has no ID for: ${entry.name}")
+                        }
+                        createdFood.id
+                    } else {
+                        entry.foodId
+                    }
+
+                    foodRequests.add(
+                        FoodInLogRequest(
+                            food_id = foodId,
+                            quantity = entry.quantity,
+                            calories = entry.calories * entry.quantity
+                        )
+                    )
+                }
+
+                val logRequest = FoodLogRequest(
+                    foods = foodRequests,
+                    latitude = 12.34,
+                    longitude = 56.78,
                     timestamp = System.currentTimeMillis(),
                     user_id = userId
                 )
 
-                // Token is automatically added by AuthInterceptor
-                foodRepository.createFoodLog(request)
+                foodRepository.createFoodLog(token, logRequest)
 
-                _uiState.update { it.copy(loading = false, showAddDialog = false) }
+                _uiState.update {
+                    it.copy(
+                        loading = false,
+                        showAddDialog = false,
+                        selectedFoods = emptyList(),
+                        searchQuery = "",
+                        searchResults = emptyList()
+                    )
+                }
                 loadFoodLogs()
             } catch (t: Throwable) {
                 t.printStackTrace()
-                Log.e("FoodViewModel", "addFoodLog error", t)
-                _uiState.update { it.copy(loading = false, error = t.message ?: "Add failed") }
+                Log.e("FoodViewModel", "submitFoodLog error", t)
+                _uiState.update {
+                    it.copy(
+                        loading = false,
+                        error = t.message ?: "Failed to submit log"
+                    )
+                }
             }
+        }
+    }
+
+    fun toggleAddDialog(show: Boolean) {
+        _uiState.update {
+            it.copy(
+                showAddDialog = show,
+                selectedFoods = if (!show) emptyList() else it.selectedFoods,
+                searchQuery = if (!show) "" else it.searchQuery,
+                searchResults = if (!show) emptyList() else it.searchResults,
+                error = null
+            )
         }
     }
 

@@ -17,40 +17,43 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface FoodService {
-    // Auth headers are automatically added by AuthInterceptor
-    
-    @POST("foods")
+    @POST("createfood")
     suspend fun createFood(
         @Body food: FoodItem
     ): Response<FoodResponse>
 
-    @GET("foods/{id}")
+    @GET("getfood/{id}")
     suspend fun getFood(
         @Path("id") id: Int
     ): Response<FoodResponse>
 
-    @GET("foods/name/{name}")
-    suspend fun getFoodByName(
-        @Path("name") name: String
-    ): Response<FoodListResponse>
-
-    @POST("food-in-logs")
+    // Requires Authorization header: pass "Bearer <token>"
+    @POST("foodinlogs")
     suspend fun createFoodInLog(
+        @Header("Authorization") authorization: String,
         @Body request: FoodInLogRequest
     ): Response<FoodInLogResponse>
 
-    @POST("food-logs")
+    @POST("foodlogs")
     suspend fun createFoodLog(
+        @Header("Authorization") authorization: String,
         @Body request: FoodLogRequest
     ): Response<FoodLogResponse>
 
-    @GET("food-logs/{id}")
+    @GET("foodlogs/{id}")
     suspend fun getFoodLog(
+        @Header("Authorization") authorization: String,
         @Path("id") id: Int
     ): Response<FoodLogResponse>
 
-    @GET("food-logs/user/{user_id}")
+    @GET("foodlogs/user/{user_id}")
     suspend fun getFoodLogsByUser(
+        @Header("Authorization") authorization: String,
         @Path("user_id") userId: Int
     ): Response<FoodLogsResponse>
+
+    @GET("getfoodbyname/{name}")
+    suspend fun getFoodByName(
+        @Path("name") name: String
+    ): Response<FoodListResponse>
 }

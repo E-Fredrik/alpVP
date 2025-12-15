@@ -16,12 +16,14 @@ class FoodRepository(private val foodService: FoodService) {
 
         if (response.isSuccessful) {
             val body = response.body() ?: throw IllegalStateException("Empty response body")
+//            Log.d("FoodRepository", "Created food: ${body.data}")
             return body.data
         } else {
             val err = response.errorBody()?.string()
             throw Exception(err ?: "Create food failed: ${response.code()}")
         }
     }
+
 
     suspend fun getFoodItem(id: Int): FoodItem {
         val response: Response<FoodResponse> = try {
@@ -73,10 +75,10 @@ class FoodRepository(private val foodService: FoodService) {
         }
     }
 
-    suspend fun getFoodLog(id: Int): FoodLogItem {
-        // Auth header is automatically added by AuthInterceptor
+    suspend fun getFoodLog(token: String, id: Int): FoodLogItem {
+        val authHeader = "Bearer $token"
         val response: Response<FoodLogResponse> = try {
-            foodService.getFoodLog(id)
+            foodService.getFoodLog(authHeader, id)
         } catch (e: IOException) {
             throw IOException("Network error: ${e.message}", e)
         }
@@ -90,10 +92,10 @@ class FoodRepository(private val foodService: FoodService) {
         }
     }
 
-    suspend fun getFoodLogByUser(userId: Int): List<FoodLogItem> {
-        // Auth header is automatically added by AuthInterceptor
+    suspend fun getFoodLogByUser(token: String, userId: Int): List<FoodLogItem> {
+        val authHeader = "Bearer $token"
         val response: Response<FoodLogsResponse> = try {
-            foodService.getFoodLogsByUser(userId)
+            foodService.getFoodLogsByUser(authHeader, userId)
         } catch (e: IOException) {
             throw IOException("Network error: ${e.message}", e)
         }
