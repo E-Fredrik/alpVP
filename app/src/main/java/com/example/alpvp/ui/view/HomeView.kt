@@ -21,6 +21,7 @@ import com.example.alpvp.ui.theme.*
 import com.example.alpvp.ui.model.FoodLog
 import com.example.alpvp.ui.viewModel.DashboardViewModel
 import com.example.alpvp.ui.viewModel.DashboardUiState
+import com.example.alpvp.ui.viewModel.AARViewModel
 import com.example.alpvp.data.dto.UserProfileData
 import com.example.alpvp.data.dto.DashboardData
 import com.example.alpvp.data.dto.RecentFoodLog
@@ -31,9 +32,22 @@ import com.example.alpvp.data.dto.FriendFoodLog
 @Composable
 fun DashboardScreen(
     dashboardViewModel: DashboardViewModel,
+    aarViewModel: AARViewModel,
     onOpenFood: () -> Unit = {}
 ) {
     val uiState by dashboardViewModel.uiState.collectAsState()
+
+    // Start AAR monitoring when dashboard is displayed (background only)
+    LaunchedEffect(Unit) {
+        aarViewModel.startMonitoring()
+    }
+
+    // Stop monitoring when leaving dashboard
+    DisposableEffect(Unit) {
+        onDispose {
+            aarViewModel.stopMonitoring()
+        }
+    }
 
     DashboardScreenContent(
         uiState = uiState,

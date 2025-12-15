@@ -28,17 +28,18 @@ class DashboardViewModel(
         // Don't reload if already loading
         if (_uiState.value.loading) return
 
-        _uiState.value = _uiState.value.copy(loading = true, error = null)
         viewModelScope.launch {
-            try {
-                android.util.Log.d("DashboardViewModel", "Loading dashboard data with token: ${token.take(10)}...")
+            _uiState.value = _uiState.value.copy(loading = true, error = null)
 
+            android.util.Log.d("DashboardViewModel", "Loading dashboard data with token: ${token.take(10)}...")
+
+            try {
                 val profileResult = dashboardRepository.getUserProfile(token)
                 val dashboardResult = dashboardRepository.getDashboardData(token)
                 
                 val profile = profileResult.getOrNull()
                 val dashboard = dashboardResult.getOrNull()
-                
+
                 android.util.Log.d("DashboardViewModel", "Profile loaded: ${profile != null}")
                 android.util.Log.d("DashboardViewModel", "Dashboard loaded: ${dashboard != null}")
 
@@ -51,21 +52,21 @@ class DashboardViewModel(
                     )
                     android.util.Log.d("DashboardViewModel", "Data loaded successfully")
                 } else {
-                    val errorMessage = profileResult.exceptionOrNull()?.message 
+                    val errorMessage = profileResult.exceptionOrNull()?.message
                         ?: dashboardResult.exceptionOrNull()?.message 
                         ?: "Failed to load data"
-                    android.util.Log.e("DashboardViewModel", "Error: $errorMessage")
                     _uiState.value = _uiState.value.copy(
                         loading = false,
                         error = errorMessage
                     )
+                    android.util.Log.e("DashboardViewModel", "Error: $errorMessage")
                 }
             } catch (e: Exception) {
-                android.util.Log.e("DashboardViewModel", "Exception loading data", e)
                 _uiState.value = _uiState.value.copy(
                     loading = false,
                     error = e.message ?: "Unknown error occurred"
                 )
+                android.util.Log.e("DashboardViewModel", "Exception loading data", e)
             }
         }
     }

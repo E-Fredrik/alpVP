@@ -148,49 +148,50 @@ fun AppRouting() {
             )
         }
     ) { innerPadding ->
-         NavHost(
-             modifier = Modifier.padding(innerPadding),
-             navController = navController,
-             // start at login screen
-             startDestination = "Login"
-         ) {
-             // Login route
-             composable("Login") {
-                 // observe auth state and navigate to home on successful login
-                 val authUiState by authViewModel.uiState.collectAsState()
-                 LaunchedEffect(authUiState.token) {
-                     authUiState.token?.let {
-                         navController.navigate(AppScreens.HOME.title) {
-                             popUpTo("Login") { inclusive = true }
-                         }
-                     }
-                 }
+        NavHost(
+            modifier = Modifier.padding(innerPadding),
+            navController = navController,
+            // start at login screen
+            startDestination = "Login"
+        ) {
+            // Login route
+            composable("Login") {
+                // observe auth state and navigate to home on successful login
+                val authUiState by authViewModel.uiState.collectAsState()
+                LaunchedEffect(authUiState.token) {
+                    authUiState.token?.let {
+                        navController.navigate(AppScreens.HOME.title) {
+                            popUpTo("Login") { inclusive = true }
+                        }
+                    }
+                }
 
-                 LoginScreen(
-                     authViewModel = authViewModel,
-                     onNavigateToSignUp = {
-                         navController.navigate("Register") {
-                             launchSingleTop = true
-                         }
-                     }
-                 )
-             }
+                LoginScreen(
+                    authViewModel = authViewModel,
+                    onNavigateToSignUp = {
+                        navController.navigate("Register") {
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
 
-             // Home route
-             composable(AppScreens.HOME.title) {
-                 // When auth token becomes available, load dashboard data
-                 val authUiState by authViewModel.uiState.collectAsState()
-                 LaunchedEffect(authUiState.token) {
-                     authUiState.token?.let { token ->
-                         dashboardViewModel.loadDashboardData(token)
-                     }
-                 }
+            // Home route
+            composable(AppScreens.HOME.title) {
+                // When auth token becomes available, load dashboard data
+                val authUiState by authViewModel.uiState.collectAsState()
+                LaunchedEffect(authUiState.token) {
+                    authUiState.token?.let { token ->
+                        dashboardViewModel.loadDashboardData(token)
+                    }
+                }
 
-                 DashboardScreen(
-                     dashboardViewModel = dashboardViewModel,
-                     onOpenFood = { navController.navigate(AppScreens.FOOD.title) }
-                 )
-             }
+                DashboardScreen(
+                    dashboardViewModel = dashboardViewModel,
+                    aarViewModel = aarViewModel,
+                    onOpenFood = { navController.navigate(AppScreens.FOOD.title) }
+                )
+            }
 
             composable(AppScreens.FOOD.title) {
                 val authUiState by authViewModel.uiState.collectAsState()
@@ -245,7 +246,8 @@ fun AppRouting() {
                 } else {
                     ProfileScreen(
                         authViewModel = authViewModel,
-                        dashboardViewModel = dashboardViewModel
+                        dashboardViewModel = dashboardViewModel,
+                        appService = container.appService
                     )
                 }
             }
@@ -267,4 +269,6 @@ fun AppRouting() {
         }
     }
 }
+
+
 

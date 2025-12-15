@@ -23,7 +23,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class AppContainer(private val context: Context) {
     companion object {
-        val BASE_URL = "http://10.152.62.60:3000/"
+        val BASE_URL = "http://10.0.181.207:3000/"
+        //10.0.181.207
+        //val BASE_URL = "http://10.152.62.60:3000/"
     }
 
     // Logging interceptor for debugging
@@ -78,7 +80,7 @@ class AppContainer(private val context: Context) {
     }
 
     // App Service (for user profile, friends, food logs, daily summary)
-    private val appService: AppService by lazy {
+    val appService: AppService by lazy {
         authenticatedRetrofit.create(AppService::class.java)
     }
 

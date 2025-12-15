@@ -64,9 +64,12 @@ class SmartNotificationManager(private val context: Context) {
     ): Boolean {
         // Block notifications if user is in unsafe state
         if (vulnerabilityLevel == VulnerabilityLevel.CRITICAL ||
-            vulnerabilityLevel == VulnerabilityLevel.HIGH) {
-            Log.d("SmartNotification",
-                "Blocked notification - user in ${vulnerabilityLevel.name} state")
+            vulnerabilityLevel == VulnerabilityLevel.HIGH
+        ) {
+            Log.d(
+                "SmartNotification",
+                "Blocked notification - user in ${vulnerabilityLevel.name} state"
+            )
             return false
         }
 
@@ -125,15 +128,13 @@ class SmartNotificationManager(private val context: Context) {
     ) {
         // This would use WorkManager to schedule the notification
         // For now, just log it
-        android.util.Log.d("SmartNotification",
-            "Scheduled reminder for $delayMinutes minutes: $title")
-    }
-
-    /**
-     * Cancel all food reminder notifications
-     */
-    fun cancelFoodReminders() {
-        notificationManager.cancel(NOTIFICATION_ID_FOOD_REMINDER)
+        android.util.Log.d(
+            "SmartNotification",
+            "Scheduled reminder for $delayMinutes minutes: $title"
+        )
     }
 }
 
+    /**
+     * Cancel all food reminder notifications
+    **/
