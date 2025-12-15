@@ -41,10 +41,10 @@ class FoodRepository(private val foodService: FoodService) {
         }
     }
 
-    suspend fun createFoodInLog(request: FoodInLogRequest): FoodInLogItem {
-        // Auth header is automatically added by AuthInterceptor
+    suspend fun createFoodInLog(token: String, request: FoodInLogRequest): FoodInLogItem {
+        val authHeader = "Bearer $token"
         val response: Response<FoodInLogResponse> = try {
-            foodService.createFoodInLog(request)
+            foodService.createFoodInLog(authHeader, request)
         } catch (e: IOException) {
             throw IOException("Network error: ${e.message}", e)
         }
@@ -58,10 +58,10 @@ class FoodRepository(private val foodService: FoodService) {
         }
     }
 
-    suspend fun createFoodLog(request: FoodLogRequest): FoodLogItem {
-        // Auth header is automatically added by AuthInterceptor
+    suspend fun createFoodLog(token: String, request: FoodLogRequest): FoodLogItem {
+        val authHeader = "Bearer $token"
         val response: Response<FoodLogResponse> = try {
-            foodService.createFoodLog(request)
+            foodService.createFoodLog(authHeader, request)
         } catch (e: IOException) {
             throw IOException("Network error: ${e.message}", e)
         }
