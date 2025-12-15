@@ -7,9 +7,10 @@ import java.io.IOException
 
 class FoodRepository(private val foodService: FoodService) {
 
-    suspend fun createFood(foodItem: FoodItem): FoodItem {
+    suspend fun createFood(token: String, foodItem: FoodItem): FoodItem {
+        val authHeader = "Bearer $token"
         val response: Response<FoodResponse> = try {
-            foodService.createFood(foodItem)
+            foodService.createFood(authHeader, foodItem)
         } catch (e: IOException) {
             throw IOException("Network error: ${e.message}", e)
         }

@@ -22,10 +22,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.alpvp.ui.viewModel.AuthViewModel
 import com.example.alpvp.data.dto.NotificationSettings
+import com.example.alpvp.data.services.NotificationScheduler
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -234,6 +236,7 @@ fun NotificationSettingsDialog(
     appService: com.example.alpvp.data.services.AppService,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
@@ -419,6 +422,18 @@ fun NotificationSettingsDialog(
                                         )
                                         val response = appService.updateNotificationSettings(settings)
                                         if (response.isSuccessful && response.body()?.success == true) {
+                                            // Schedule notifications
+                                            val scheduler = NotificationScheduler(context)
+                                            if (notificationEnabled) {
+                                                scheduler.scheduleNotifications(
+                                                    breakfastTime = breakfastTime,
+                                                    lunchTime = lunchTime,
+                                                    dinnerTime = dinnerTime,
+                                                    snackTime = snackTime
+                                                )
+                                            } else {
+                                                scheduler.cancelAll()
+                                            }
                                             onDismiss()
                                         } else {
                                             errorMessage = "Failed to save settings"

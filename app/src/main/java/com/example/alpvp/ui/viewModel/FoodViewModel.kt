@@ -44,6 +44,8 @@ class FoodViewModel(
     }
 
     private fun mapToFoodLogModel(dto: FoodLogItem): FoodLogModel {
+        Log.d("FoodViewModel", "Mapping FoodLogItem: log_id=${dto.log_id}, foodInLogs count=${dto.foodInLogs.size}")
+        
         return FoodLogModel(
             logId = dto.log_id,
             userId = dto.user_id,
@@ -51,6 +53,8 @@ class FoodViewModel(
             latitude = dto.latitude,
             longitude = dto.longitude,
             foodInLogs = dto.foodInLogs.map { foodInLog ->
+                Log.d("FoodViewModel", "Mapping FoodInLog: id=${foodInLog.id}, name=${foodInLog.food.name}, calories=${foodInLog.calories}, quantity=${foodInLog.quantity}")
+                
                 FoodInLogItemModel(
                     id = foodInLog.id,
                     foodId = foodInLog.food_id,
@@ -71,15 +75,23 @@ class FoodViewModel(
     }
 
     private fun loadFoodLogs() {
+        Log.d("FoodViewModel", "Loading food logs for user $userId")
         _uiState.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             try {
                 val logs = foodRepository.getFoodLogByUser(token, userId)
-                    .map { mapToFoodLogModel(it) }
-                _uiState.update { it.copy(loading = false, logs = logs) }
+                Log.d("FoodViewModel", "Received ${logs.size} food logs from API")
+                
+                val mappedLogs = logs.map { 
+                    Log.d("FoodViewModel", "Processing log: ${it.log_id}")
+                    mapToFoodLogModel(it) 
+                }
+                
+                Log.d("FoodViewModel", "Mapped ${mappedLogs.size} logs successfully")
+                _uiState.update { it.copy(loading = false, logs = mappedLogs) }
             } catch (t: Throwable) {
                 t.printStackTrace()
-                Log.e("FoodViewModel", "loadFoodLogs error", t)
+                Log.e("FoodViewModel", "loadFoodLogs error: ${t.message}", t)
                 _uiState.update { it.copy(loading = false, error = t.message ?: "Load failed") }
             }
         }
@@ -93,21 +105,28 @@ class FoodViewModel(
             return
         }
 
+        Log.d("FoodViewModel", "Searching for: $trimmed")
         viewModelScope.launch {
             try {
-                val results = foodRepository.getFoodByName(trimmed)
-                    .mapNotNull { dto ->
-                        if (dto.name != null && dto.calories != null) {
-                            mapToFoodModel(dto)
-                        } else {
-                            null
-                        }
+                val rawResults = foodRepository.getFoodByName(trimmed)
+                Log.d("FoodViewModel", "Raw results from API: ${rawResults.size} items")
+
+                val results = rawResults.mapNotNull { dto ->
+                    Log.d("FoodViewModel", "Processing food: id=${dto.id}, name=${dto.name}, calories=${dto.calories}")
+                    if (dto.name != null && dto.calories != null) {
+                        mapToFoodModel(dto)
+                    } else {
+                        Log.w("FoodViewModel", "Skipping food with null name or calories: $dto")
+                        null
                     }
+                }
+
+                Log.d("FoodViewModel", "Filtered results: ${results.size} items")
                 _uiState.update { it.copy(searchResults = results) }
             } catch (t: Throwable) {
                 t.printStackTrace()
-                Log.e("FoodViewModel", "searchFood error", t)
-                _uiState.update { it.copy(searchResults = emptyList()) }
+                Log.e("FoodViewModel", "searchFood error: ${t.message}", t)
+                _uiState.update { it.copy(searchResults = emptyList(), error = "Search failed: ${t.message}") }
             }
         }
     }
@@ -138,25 +157,34 @@ class FoodViewModel(
                 val foodRequests = mutableListOf<FoodInLogRequest>()
 
                 for (entry in selected) {
-                    val foodId = if (entry.foodId == null) {
-                        val foodItem = FoodItem(
-                            id = null,
-                            name = entry.name,
-                            calories = entry.calories
-                        )
-                        val createdFood = foodRepository.createFood(foodItem)
+                    var foodIdToUse = entry.foodId
 
-                        if (createdFood.id == null) {
-                            throw IllegalStateException("Created food has no ID for: ${entry.name}")
+                    // If foodId is null, create the custom food first
+                    if (foodIdToUse == null) {
+                        try {
+                            Log.d("FoodViewModel", "Creating custom food: ${entry.name}")
+                            val newFoodItem = FoodItem(
+                                id = null,
+                                name = entry.name,
+                                calories = entry.calories
+                            )
+                            val createdFood = foodRepository.createFood(token, newFoodItem)
+                            foodIdToUse = createdFood.id
+                            Log.d("FoodViewModel", "Created custom food with ID: $foodIdToUse")
+                        } catch (e: Exception) {
+                            Log.e("FoodViewModel", "Failed to create custom food: ${entry.name}", e)
+                            throw Exception("Failed to create custom food '${entry.name}': ${e.message}")
                         }
-                        createdFood.id
-                    } else {
-                        entry.foodId
+                    }
+
+                    // Now foodIdToUse should be non-null
+                    if (foodIdToUse == null) {
+                        throw Exception("Failed to get food ID for '${entry.name}'")
                     }
 
                     foodRequests.add(
                         FoodInLogRequest(
-                            food_id = foodId,
+                            food_id = foodIdToUse,  // Now guaranteed to be non-null
                             quantity = entry.quantity,
                             calories = entry.calories * entry.quantity
                         )
@@ -171,7 +199,9 @@ class FoodViewModel(
                     user_id = userId
                 )
 
+                Log.d("FoodViewModel", "Submitting food log to backend...")
                 foodRepository.createFoodLog(token, logRequest)
+                Log.d("FoodViewModel", "Food log submitted successfully!")
 
                 _uiState.update {
                     it.copy(
@@ -182,14 +212,28 @@ class FoodViewModel(
                         searchResults = emptyList()
                     )
                 }
+                
+                // Reload the food logs to show the new entry
+                Log.d("FoodViewModel", "Reloading food logs after successful submit")
                 loadFoodLogs()
             } catch (t: Throwable) {
                 t.printStackTrace()
-                Log.e("FoodViewModel", "submitFoodLog error", t)
+                Log.e("FoodViewModel", "submitFoodLog error: ${t.message}", t)
+
+                val errorMsg = when {
+                    t.message?.contains("Cannot POST", ignoreCase = true) == true ->
+                        "Backend endpoint error. Check if the endpoint is correct."
+                    t.message?.contains("404") == true ->
+                        "Endpoint not found (404). Backend may be down."
+                    t.message?.contains("custom food", ignoreCase = true) == true ->
+                        t.message!! // Show the specific custom food error
+                    else -> "Failed to submit: ${t.message ?: "Unknown error"}"
+                }
+
                 _uiState.update {
                     it.copy(
                         loading = false,
-                        error = t.message ?: "Failed to submit log"
+                        error = errorMsg
                     )
                 }
             }
@@ -201,14 +245,10 @@ class FoodViewModel(
             it.copy(
                 showAddDialog = show,
                 selectedFoods = if (!show) emptyList() else it.selectedFoods,
-                searchQuery = if (!show) "" else it.searchQuery,
-                searchResults = if (!show) emptyList() else it.searchResults,
+                searchQuery = "",
+                searchResults = emptyList(),
                 error = null
             )
         }
-    }
-
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
     }
 }

@@ -1,6 +1,8 @@
 package com.example.alpvp
 
 import android.Manifest
+import android.app.AlarmManager
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -53,6 +55,23 @@ class MainActivity : ComponentActivity() {
             ) {
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             } else {
+                checkExactAlarmPermission()
+            }
+        } else {
+            checkExactAlarmPermission()
+        }
+    }
+
+    private fun checkExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (!alarmManager.canScheduleExactAlarms()) {
+                Log.w("MainActivity", "⚠️ SCHEDULE_EXACT_ALARM permission not granted!")
+                Log.w("MainActivity", "Notifications may not work precisely. Please enable in settings.")
+                // Still try to load notifications
+                loadAndScheduleNotifications()
+            } else {
+                Log.d("MainActivity", "✅ SCHEDULE_EXACT_ALARM permission granted")
                 loadAndScheduleNotifications()
             }
         } else {
@@ -76,11 +95,11 @@ class MainActivity : ComponentActivity() {
                             dinnerTime = settings.dinnerTime,
                             snackTime = settings.snackTime
                         )
-                        Log.d("MainActivity", "Notifications scheduled successfully")
+                        Log.d("MainActivity", "✅ Notifications scheduled")
                     }
                 }
             } catch (e: Exception) {
-                Log.e("MainActivity", "Failed to load notification settings", e)
+                Log.e("MainActivity", "Failed to schedule", e)
             }
         }
     }
