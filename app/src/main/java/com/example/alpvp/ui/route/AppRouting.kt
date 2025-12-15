@@ -16,10 +16,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -27,20 +30,23 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.alpvp.data.container.AppContainer
+import com.example.alpvp.ui.view.FoodScreen
 import com.example.alpvp.ui.view.DashboardScreen
 import com.example.alpvp.ui.view.LoginScreen
+import com.example.alpvp.ui.view.ProfileScreen
+import com.example.alpvp.ui.view.RegisterScreen
 import com.example.alpvp.ui.viewModel.DashboardViewModel
 import com.example.alpvp.ui.viewModel.AuthViewModel
+import com.example.alpvp.ui.viewModel.FoodViewModel
 
 enum class AppScreens (val title: String, val icon: ImageVector?= null) {
     HOME("Home", Icons.Filled.Home),
     FOOD("Food", Icons.Filled.Fastfood),
     FRIENDS("Friends", Icons.Filled.Groups),
     PROFILE("Profile", Icons.Filled.Person),
+    LOGIN("Login"),
+    REGISTER("Register"),
     ERROR("ERROR")
 }
 
@@ -80,8 +86,9 @@ fun AppRouting() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    // create shared app container and view models here so login & home can both access them
-    val appContainer = remember { AppContainer() }
+    val container = AppContainer(
+        context = LocalContext.current.applicationContext
+    )
 
     // AuthViewModel to observe login token
     val authViewModel: AuthViewModel = viewModel(
@@ -89,7 +96,11 @@ fun AppRouting() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
                     @Suppress("UNCHECKED_CAST")
-                    return AuthViewModel(appContainer.authRepository, appContainer.userRepository) as T
+                    return AuthViewModel(
+                        container.authRepository,
+                        container.userPreferencesRepository,
+                        container.userRepository
+                    ) as T
                 }
                 throw IllegalArgumentException("Unknown ViewModel class")
             }
@@ -102,7 +113,7 @@ fun AppRouting() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 if (modelClass.isAssignableFrom(DashboardViewModel::class.java)) {
                     @Suppress("UNCHECKED_CAST")
-                    return DashboardViewModel(appContainer.dashboardRepository) as T
+                    return DashboardViewModel(container.dashboardRepository) as T
                 }
                 throw IllegalArgumentException("Unknown ViewModel class")
             }
@@ -143,7 +154,11 @@ fun AppRouting() {
 
                  LoginScreen(
                      authViewModel = authViewModel,
-                     onNavigateToSignUp = { /* TODO: navigate to SignUp route if implemented */ }
+                     onNavigateToSignUp = {
+                         navController.navigate("Register") {
+                             launchSingleTop = true
+                         }
+                     }
                  )
              }
 
@@ -160,17 +175,76 @@ fun AppRouting() {
                  DashboardScreen(dashboardViewModel = dashboardViewModel, onOpenFood = {})
              }
 
-             composable(AppScreens.FOOD.title) {
-                 Text("Food Screen")
-             }
+            composable(AppScreens.FOOD.title) {
+                val authUiState by authViewModel.uiState.collectAsState()
+                if (authUiState.token == null) {
+                    LaunchedEffect(Unit) {
+                        navController.navigate("Login") {
+                            launchSingleTop = true
+                        }
+                    }
+                    Text("Redirecting to Login...")
+                } else {
+                    val foodViewModel: FoodViewModel = viewModel(
+                        factory = object : ViewModelProvider.Factory {
+                            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                @Suppress("UNCHECKED_CAST")
+                                return FoodViewModel(
+                                    container.foodRepository,
+                                    authUiState.token!!,
+                                    authUiState.userId!!
+                                ) as T
+                            }
+                        }
+                    )
+                    FoodScreen(foodViewModel = foodViewModel)
+                }
+            }
 
-             composable(AppScreens.FRIENDS.title) {
-                 Text("Friends Screen")
-             }
 
-             composable(AppScreens.PROFILE.title) {
-                 Text("Profile Screen")
-             }
-         }
+            composable(AppScreens.FRIENDS.title) {
+                val authUiState by authViewModel.uiState.collectAsState()
+                if (authUiState.token == null) {
+                    LaunchedEffect(Unit) {
+                        navController.navigate("Login") {
+                            launchSingleTop = true
+                        }
+                    }
+                    Text("Redirecting to Login...")
+                } else {
+                    Text("Friends Screen")
+                }
+            }
+
+            composable(AppScreens.PROFILE.title) {
+                val authUiState by authViewModel.uiState.collectAsState()
+                if (authUiState.token == null) {
+                    LaunchedEffect(Unit) {
+                        navController.navigate("Login") {
+                            launchSingleTop = true
+                        }
+                    }
+                    Text("Redirecting to Login...")
+                } else {
+                    ProfileScreen(authViewModel = authViewModel)
+                }
+            }
+
+            composable("Register") {
+                val authUiState by authViewModel.uiState.collectAsState()
+                if (authUiState.token != null) {
+                    LaunchedEffect(authUiState.token) {
+                        navController.navigate(AppScreens.HOME.title) {
+                            popUpTo("Register") { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                    Text("Redirecting to Home...")
+                } else {
+                    RegisterScreen(authViewModel = authViewModel)
+                }
+            }
+        }
     }
 }
+

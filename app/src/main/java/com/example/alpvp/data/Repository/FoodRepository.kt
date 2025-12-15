@@ -90,4 +90,38 @@ class FoodRepository(private val foodService: FoodService) {
             throw Exception(err ?: "Get food log failed: ${response.code()}")
         }
     }
+
+    suspend fun getFoodLogByUser(token: String, userId: Int): List<FoodLogItem> {
+        val authHeader = "Bearer $token"
+        val response: Response<FoodLogsResponse> = try {
+            foodService.getFoodLogsByUser(authHeader, userId)
+        } catch (e: IOException) {
+            throw IOException("Network error: ${e.message}", e)
+        }
+
+        if (response.isSuccessful) {
+            val body = response.body() ?: return emptyList()
+            return body.`data`
+        } else {
+            val err = response.errorBody()?.string()
+            throw Exception(err ?: "Get food logs by user failed: ${response.code()}")
+        }
+    }
+
+    suspend fun getFoodByName(name: String): List<FoodItem> {
+        val response: Response<FoodListResponse> = try {
+            foodService.getFoodByName(name)
+        } catch (e: IOException) {
+            throw IOException("Network error: ${e.message}", e)
+        }
+
+        if (response.isSuccessful) {
+            val body = response.body() ?: throw IllegalStateException("Empty response body")
+            return body.data
+        } else {
+            val err = response.errorBody()?.string()
+            throw Exception(err ?: "Get food by name failed: ${response.code()}")
+        }
+    }
+
 }
