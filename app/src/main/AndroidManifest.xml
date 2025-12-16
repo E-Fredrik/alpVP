@@ -49,13 +49,18 @@
             android:foregroundServiceType="location" />
         
         <receiver
-            android:name=".data.services.NotificationReceiver"
+            android:name=".notification.NotificationReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+        
+        <receiver
+            android:name=".data.services.ActivityRecognitionReceiver"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 
 </manifest>

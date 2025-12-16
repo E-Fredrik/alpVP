@@ -37,12 +37,14 @@ fun DashboardScreen(
 ) {
     val uiState by dashboardViewModel.uiState.collectAsState()
 
-    // Start AAR monitoring when dashboard is displayed (background only)
-    LaunchedEffect(Unit) {
-        aarViewModel.startMonitoring()
+    
+    LaunchedEffect(uiState.userProfile?.userId) {
+        uiState.userProfile?.userId?.let { userId ->
+            aarViewModel.startMonitoring(userId)
+        }
     }
 
-    // Stop monitoring when leaving dashboard
+    
     DisposableEffect(Unit) {
         onDispose {
             aarViewModel.stopMonitoring()
@@ -55,7 +57,7 @@ fun DashboardScreen(
     )
 }
 
-// Helper function to calculate logging streak
+
 private fun calculateStreak(foodLogs: List<RecentFoodLog>): Int {
     if (foodLogs.isEmpty()) return 0
 
@@ -82,13 +84,13 @@ private fun calculateStreak(foodLogs: List<RecentFoodLog>): Int {
     today.set(java.util.Calendar.MILLISECOND, 0)
     val todayTimestamp = today.timeInMillis
 
-    // Check if most recent log is today or yesterday
+    
     val mostRecentDay = daysWithLogs.first()
     val daysDiff = ((todayTimestamp - mostRecentDay) / (24 * 60 * 60 * 1000)).toInt()
 
     if (daysDiff > 1) return 0 // Streak broken
 
-    // Count consecutive days
+    
     var streak = 0
     var expectedDay = todayTimestamp
 
@@ -109,7 +111,7 @@ private fun DashboardScreenContent(
     uiState: DashboardUiState,
     onOpenFood: () -> Unit = {}
 ) {
-    // Local helpers
+    
     fun getBMIStatus(): String {
         val profile = uiState.userProfile ?: return "BMI: --"
         val heightInMeters = profile.height / 100.0
@@ -148,7 +150,7 @@ private fun DashboardScreenContent(
 
     val caloriesRemaining = caloriesGoal - todayCalories
 
-    // Convert recent food logs from API to UI model
+    
     val recentFoodLogs = uiState.userProfile?.recentFoodLogs?.flatMap { log ->
         log.foods.map { food ->
             FoodLog(

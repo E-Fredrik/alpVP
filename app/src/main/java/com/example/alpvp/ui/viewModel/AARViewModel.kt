@@ -18,9 +18,6 @@ class AARViewModel(private val aarService: AARService) : ViewModel() {
     val aarState: StateFlow<AARState> = _aarState
 
     init {
-        // Start monitoring when ViewModel is created
-        startMonitoring()
-
         // Observe AAR service state
         viewModelScope.launch {
             aarService.aarState.collect { state ->
@@ -29,8 +26,8 @@ class AARViewModel(private val aarService: AARService) : ViewModel() {
         }
     }
 
-    fun startMonitoring() {
-        aarService.startMonitoring()
+    fun startMonitoring(userId: Int) {
+        aarService.startMonitoring(userId)
     }
 
     fun stopMonitoring() {

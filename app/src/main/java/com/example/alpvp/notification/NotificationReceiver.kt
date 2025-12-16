@@ -1,4 +1,4 @@
-package com.example.alpvp.data.services
+package com.example.alpvp.notification
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -17,9 +17,6 @@ class NotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val title = intent.getStringExtra("title") ?: "Meal Time!"
         
-        Log.d("Notification", "🔔 Showing: $title")
-        
-        // Create channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 "meals",

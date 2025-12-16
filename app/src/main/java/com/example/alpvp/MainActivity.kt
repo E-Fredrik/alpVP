@@ -14,7 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.alpvp.data.container.AppContainer
-import com.example.alpvp.data.services.NotificationScheduler
+import com.example.alpvp.notification.NotificationScheduler
 import com.example.alpvp.ui.route.AppRouting
 import com.example.alpvp.ui.theme.AlpVPTheme
 import kotlinx.coroutines.launch

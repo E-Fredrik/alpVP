@@ -8,13 +8,18 @@ import com.example.alpvp.data.repository.DashboardRepository
 import com.example.alpvp.data.repository.FoodLogRepository
 import com.example.alpvp.data.repository.FriendRepository
 import com.example.alpvp.data.repository.DailySummaryRepository
+import com.example.alpvp.data.repository.ActivityLogRepository
+import com.example.alpvp.data.repository.VisitLogRepository
+import com.example.alpvp.data.repository.EmaLogRepository
+import com.example.alpvp.data.repository.PlaceRepository
 import com.example.alpvp.data.Service.FoodService
 import com.example.alpvp.data.Service.UserService
 import com.example.alpvp.data.services.DashboardService
 import com.example.alpvp.data.services.AppService
 import com.example.alpvp.data.UserPreferencesRepository
 import com.example.alpvp.data.services.AARService
-import com.example.alpvp.data.services.SmartNotificationManager
+import com.example.alpvp.notification.SmartNotificationManager
+import com.example.alpvp.notification.NotificationScheduler
 import com.example.alpvp.data.utils.AuthInterceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -100,6 +105,22 @@ class AppContainer(private val context: Context) {
         DailySummaryRepository(appService)
     }
 
+    val activityLogRepository: ActivityLogRepository by lazy {
+        ActivityLogRepository(appService)
+    }
+
+    val visitLogRepository: VisitLogRepository by lazy {
+        VisitLogRepository(appService)
+    }
+
+    val emaLogRepository: EmaLogRepository by lazy {
+        EmaLogRepository(appService)
+    }
+
+    val placeRepository: PlaceRepository by lazy {
+        PlaceRepository(appService)
+    }
+
     // ========================================================================
     // OTHER SERVICES
     // ========================================================================
@@ -111,11 +132,16 @@ class AppContainer(private val context: Context) {
 
     // AAR Service for activity and attention recognition
     val aarService: AARService by lazy {
-        AARService(context)
+        AARService(context, appService)
     }
 
     // Smart Notification Manager - uses AAR for safe notification delivery
     val smartNotificationManager: SmartNotificationManager by lazy {
         SmartNotificationManager(context)
+    }
+
+    // Notification Scheduler - handles meal time notifications
+    val notificationScheduler: NotificationScheduler by lazy {
+        NotificationScheduler(context)
     }
 }

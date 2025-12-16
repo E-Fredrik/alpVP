@@ -22,13 +22,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModel
 import com.example.alpvp.ui.viewModel.AuthViewModel
+import com.example.alpvp.ui.viewModel.NotificationViewModel
 import com.example.alpvp.data.dto.NotificationSettings
-import com.example.alpvp.data.services.NotificationScheduler
 import kotlinx.coroutines.launch
+import com.example.alpvp.data.services.AppService
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +42,17 @@ fun ProfileScreen(
     appService: com.example.alpvp.data.services.AppService,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current.applicationContext
+    
+    // Create NotificationViewModel
+    val notificationViewModel: NotificationViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return NotificationViewModel(appService, context) as T
+            }
+        }
+    )
     val authUiState by authViewModel.uiState.collectAsStateWithLifecycle()
     val dashboardUiState by dashboardViewModel.uiState.collectAsStateWithLifecycle()
     val bg = Brush.verticalGradient(listOf(Color(0xFFF3F7FB), Color(0xFFEFF4FB)))
@@ -203,8 +218,7 @@ fun ProfileScreen(
                 // Show notification settings dialog
                 if (showNotificationDialog) {
                     NotificationSettingsDialog(
-                        authViewModel = authViewModel,
-                        appService = appService,
+                        notificationViewModel = notificationViewModel,
                         onDismiss = { showNotificationDialog = false }
                     )
                 }
@@ -232,24 +246,18 @@ fun ProfileScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationSettingsDialog(
-    authViewModel: AuthViewModel,
-    appService: com.example.alpvp.data.services.AppService,
+    notificationViewModel: NotificationViewModel,
     onDismiss: () -> Unit
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
+    val uiState by notificationViewModel.uiState.collectAsStateWithLifecycle()
 
-    // State for notification settings
+    // Local state for time settings (synced with ViewModel)
     var notificationEnabled by remember { mutableStateOf(true) }
     var breakfastTime by remember { mutableStateOf("08:00") }
     var lunchTime by remember { mutableStateOf("12:00") }
     var dinnerTime by remember { mutableStateOf("18:00") }
     var snackTime by remember { mutableStateOf("15:00") }
-
-    var isLoading by remember { mutableStateOf(true) }
-    var isSaving by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     // Time picker states
     var showBreakfastPicker by remember { mutableStateOf(false) }
@@ -257,22 +265,23 @@ fun NotificationSettingsDialog(
     var showDinnerPicker by remember { mutableStateOf(false) }
     var showSnackPicker by remember { mutableStateOf(false) }
 
-    // Load current notification settings
-    LaunchedEffect(Unit) {
-        try {
-            val response = appService.getNotificationSettings()
-                if (response.isSuccessful && response.body()?.success == true) {
-                    val settings = response.body()?.data
-                    notificationEnabled = settings?.notificationEnabled ?: true
-                    breakfastTime = settings?.breakfastTime ?: "08:00"
-                    lunchTime = settings?.lunchTime ?: "12:00"
-                    dinnerTime = settings?.dinnerTime ?: "18:00"
-                    snackTime = settings?.snackTime ?: "15:00"
-                }
-            isLoading = false
-        } catch (e: Exception) {
-            errorMessage = "Failed to load settings: ${e.message}"
-            isLoading = false
+    // Sync local state with ViewModel when settings are loaded
+    LaunchedEffect(uiState.settings) {
+        uiState.settings?.let { settings ->
+            notificationEnabled = settings.notificationEnabled
+            breakfastTime = settings.breakfastTime ?: "08:00"
+            lunchTime = settings.lunchTime ?: "12:00"
+            dinnerTime = settings.dinnerTime ?: "18:00"
+            snackTime = settings.snackTime ?: "15:00"
+        }
+    }
+
+    // Handle success message - auto dismiss after showing
+    LaunchedEffect(uiState.successMessage) {
+        uiState.successMessage?.let {
+            kotlinx.coroutines.delay(1000)
+            notificationViewModel.clearSuccessMessage()
+            onDismiss()
         }
     }
 
@@ -299,7 +308,7 @@ fun NotificationSettingsDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                if (isLoading) {
+                if (uiState.loading) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -381,12 +390,23 @@ fun NotificationSettingsDialog(
                     }
 
                     // Error message
-                    if (errorMessage != null) {
+                    if (uiState.error != null) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = errorMessage ?: "",
+                            text = uiState.error ?: "",
                             color = Color.Red,
                             fontSize = 12.sp
+                        )
+                    }
+                    
+                    // Success message
+                    if (uiState.successMessage != null) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = uiState.successMessage ?: "",
+                            color = Color(0xFF4CAF50),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     }
 
@@ -409,49 +429,23 @@ fun NotificationSettingsDialog(
                         // Save button
                         Button(
                             onClick = {
-                                scope.launch {
-                                    isSaving = true
-                                    errorMessage = null
-                                    try {
-                                        val settings = NotificationSettings(
-                                            notificationEnabled = notificationEnabled,
-                                            breakfastTime = breakfastTime,
-                                            lunchTime = lunchTime,
-                                            dinnerTime = dinnerTime,
-                                            snackTime = snackTime
-                                        )
-                                        val response = appService.updateNotificationSettings(settings)
-                                        if (response.isSuccessful && response.body()?.success == true) {
-                                            // Schedule notifications
-                                            val scheduler = NotificationScheduler(context)
-                                            if (notificationEnabled) {
-                                                scheduler.scheduleNotifications(
-                                                    breakfastTime = breakfastTime,
-                                                    lunchTime = lunchTime,
-                                                    dinnerTime = dinnerTime,
-                                                    snackTime = snackTime
-                                                )
-                                            } else {
-                                                scheduler.cancelAll()
-                                            }
-                                            onDismiss()
-                                        } else {
-                                            errorMessage = "Failed to save settings"
-                                        }
-                                    } catch (e: Exception) {
-                                        errorMessage = "Error: ${e.message}"
-                                    }
-                                    isSaving = false
-                                }
+                                val settings = NotificationSettings(
+                                    notificationEnabled = notificationEnabled,
+                                    breakfastTime = breakfastTime,
+                                    lunchTime = lunchTime,
+                                    dinnerTime = dinnerTime,
+                                    snackTime = snackTime
+                                )
+                                notificationViewModel.updateSettings(settings)
                             },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(8.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFF4F8BFF)
                             ),
-                            enabled = !isSaving
+                            enabled = !uiState.loading
                         ) {
-                            if (isSaving) {
+                            if (uiState.loading) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(20.dp),
                                     color = Color.White,

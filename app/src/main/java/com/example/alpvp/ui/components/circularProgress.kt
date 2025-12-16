@@ -45,7 +45,7 @@ fun CircularProgress(
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.size(size)) {
-            // Ensure both background circle and arc share the same bounding box so strokes align
+            
             val canvasSizePx = size.toPx()
             val strokePx = strokeWidth.toPx()
             val diameter = canvasSizePx - strokePx
@@ -53,7 +53,7 @@ fun CircularProgress(
             val arcSize = androidx.compose.ui.geometry.Size(diameter, diameter)
             val radius = diameter / 2f
 
-            // Background circle (centered inside the stroke inset)
+            
             drawCircle(
                 color = backgroundColor,
                 radius = radius,

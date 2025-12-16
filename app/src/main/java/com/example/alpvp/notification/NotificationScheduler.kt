@@ -1,4 +1,4 @@
-package com.example.alpvp.data.services
+package com.example.alpvp.notification
 
 import android.app.AlarmManager
 import android.app.PendingIntent
