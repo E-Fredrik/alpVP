@@ -5,7 +5,6 @@ import com.example.alpvp.data.repository.AuthRepository
 import com.example.alpvp.data.repository.UserRepository
 import com.example.alpvp.data.repository.FoodRepository
 import com.example.alpvp.data.repository.DashboardRepository
-import com.example.alpvp.data.repository.FoodLogRepository
 import com.example.alpvp.data.repository.FriendRepository
 import com.example.alpvp.data.repository.DailySummaryRepository
 import com.example.alpvp.data.repository.ActivityLogRepository
@@ -28,7 +27,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class AppContainer(private val context: Context) {
     companion object {
-        val BASE_URL = "http://192.168.1.219:3000/"
+        val BASE_URL = "http://10.0.172.42:3000/"
         //10.0.181.207
         //val BASE_URL = "http://10.152.62.60:3000/"
     }
@@ -93,9 +92,7 @@ class AppContainer(private val context: Context) {
         UserRepository(appService)
     }
 
-    val foodLogRepository: FoodLogRepository by lazy {
-        FoodLogRepository(appService)
-    }
+
 
     val friendRepository: FriendRepository by lazy {
         FriendRepository(appService)

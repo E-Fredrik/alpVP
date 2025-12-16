@@ -59,22 +59,3 @@ fun calculateVulnerability(activity: UserActivity, phoneUsage: PhoneUsage): Vuln
         else -> VulnerabilityLevel.UNKNOWN
     }
 }
-
-/**
- * Get recommendation based on vulnerability level
- */
-fun getVulnerabilityRecommendation(level: VulnerabilityLevel, activity: UserActivity): String {
-    return when (level) {
-        VulnerabilityLevel.CRITICAL -> when (activity) {
-            UserActivity.IN_VEHICLE -> "⚠️ Don't use your phone while driving! Pull over if you need to log food."
-            UserActivity.RUNNING -> "⚠️ Stop running before logging food. Stay safe!"
-            UserActivity.ON_BICYCLE -> "⚠️ Don't use your phone while cycling! Find a safe place to stop."
-            else -> "⚠️ Critical: Stop what you're doing before using the app."
-        }
-        VulnerabilityLevel.HIGH -> "⚠️ You're walking. Be aware of your surroundings while logging food."
-        VulnerabilityLevel.MODERATE -> "💡 You're in a good position to log your meal."
-        VulnerabilityLevel.SAFE -> "✅ Safe environment detected. Log your food comfortably."
-        VulnerabilityLevel.UNKNOWN -> "Analyzing your activity..."
-    }
-}
-

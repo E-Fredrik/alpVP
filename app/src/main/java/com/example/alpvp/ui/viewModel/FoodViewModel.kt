@@ -177,7 +177,7 @@ class FoodViewModel(
                         }
                     }
 
-                    // Now foodIdToUse should be non-null
+
                     if (foodIdToUse == null) {
                         throw Exception("Failed to get food ID for '${entry.name}'")
                     }
