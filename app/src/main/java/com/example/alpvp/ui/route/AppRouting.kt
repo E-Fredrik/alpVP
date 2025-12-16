@@ -36,6 +36,7 @@ import com.example.alpvp.ui.view.DashboardScreen
 import com.example.alpvp.ui.view.LoginScreen
 import com.example.alpvp.ui.view.ProfileScreen
 import com.example.alpvp.ui.view.RegisterScreen
+import com.example.alpvp.ui.view.FriendsScreen
 import com.example.alpvp.ui.viewModel.DashboardViewModel
 import com.example.alpvp.ui.viewModel.AuthViewModel
 import com.example.alpvp.ui.viewModel.FoodViewModel
@@ -108,7 +109,7 @@ fun AppRouting() {
         }
     )
 
-    // DashboardViewModel which needs a DashboardRepository
+
     val dashboardViewModel: DashboardViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -156,7 +157,7 @@ fun AppRouting() {
         ) {
             // Login route
             composable("Login") {
-                // observe auth state and navigate to home on successful login
+
                 val authUiState by authViewModel.uiState.collectAsState()
                 LaunchedEffect(authUiState.token) {
                     authUiState.token?.let {
@@ -230,7 +231,7 @@ fun AppRouting() {
                     }
                     Text("Redirecting to Login...")
                 } else {
-                    Text("Friends Screen")
+                    FriendsScreen(dashboardViewModel = dashboardViewModel)
                 }
             }
 

@@ -3,9 +3,9 @@ package com.example.alpvp.data.repository
 import com.example.alpvp.ui.model.Friend
 import com.example.alpvp.ui.model.FriendStatus
 import com.example.alpvp.ui.model.FoodLog
-import com.example.alpvp.data.services.AppService
-import com.example.alpvp.data.services.FriendRequest
-import com.example.alpvp.data.services.FriendStatusUpdate
+import com.example.alpvp.data.Service.AppService
+import com.example.alpvp.data.Service.FriendRequest
+import com.example.alpvp.data.Service.FriendStatusUpdate
 
 class FriendRepository(private val appService: AppService) {
 

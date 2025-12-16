@@ -1,6 +1,6 @@
 package com.example.alpvp.data.repository
 import com.example.alpvp.ui.model.FoodLog
-import com.example.alpvp.data.services.AppService
+import com.example.alpvp.data.Service.AppService
 class FoodLogRepository(private val appService: AppService) {
     suspend fun logFood(foodLog: FoodLog): FoodLog {
         return appService.createFoodLog(foodLog)

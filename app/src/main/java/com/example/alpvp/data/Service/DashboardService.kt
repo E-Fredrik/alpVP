@@ -1,4 +1,4 @@
-package com.example.alpvp.data.services
+package com.example.alpvp.data.Service
 
 import com.example.alpvp.data.dto.DashboardResponse
 import com.example.alpvp.data.dto.UserProfileResponse

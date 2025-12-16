@@ -3,7 +3,7 @@ package com.example.alpvp.data.repository
 import android.util.Log
 import com.example.alpvp.data.dto.DashboardData
 import com.example.alpvp.data.dto.UserProfileData
-import com.example.alpvp.data.services.DashboardService
+import com.example.alpvp.data.Service.DashboardService
 
 class DashboardRepository(private val dashboardService: DashboardService) {
     

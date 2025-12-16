@@ -42,11 +42,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service
-            android:name=".data.services.LocationTrackingService"
-            android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="location" />
+
         
         <receiver
             android:name=".notification.NotificationReceiver"
@@ -58,7 +54,7 @@
         </receiver>
         
         <receiver
-            android:name=".data.services.ActivityRecognitionReceiver"
+            android:name=".data.Service.ActivityRecognitionReceiver"
             android:enabled="true"
             android:exported="false" />
     </application>

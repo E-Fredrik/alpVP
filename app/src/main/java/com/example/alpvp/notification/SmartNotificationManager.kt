@@ -18,12 +18,12 @@ import com.example.alpvp.MainActivity
 import com.example.alpvp.R
 import com.example.alpvp.data.container.AppContainer
 import com.example.alpvp.data.dto.NotificationTrigger
-import com.example.alpvp.ui.model.VulnerabilityLevel
+//import com.example.alpvp.ui.model.VulnerabilityLevel
 import com.google.android.gms.location.LocationServices
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
+//import kotlinx.coroutines.CoroutineScope
+//import kotlinx.coroutines.Dispatchers
+//import kotlinx.coroutines.launch
+//import kotlinx.coroutines.tasks.await
 
 /**
  * Smart Notification Manager
@@ -82,31 +82,11 @@ class SmartNotificationManager(private val context: Context) {
      * @return true if notification was sent, false if blocked due to safety
      */
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
-    fun sendFoodReminderIfSafe(
-        vulnerabilityLevel: VulnerabilityLevel,
-        title: String,
-        message: String
-    ): Boolean {
-        // Block notifications if user is in unsafe state
-        if (vulnerabilityLevel == VulnerabilityLevel.CRITICAL ||
-            vulnerabilityLevel == VulnerabilityLevel.HIGH
-        ) {
-            Log.d(
-                "SmartNotification",
-                "Blocked notification - user in ${vulnerabilityLevel.name} state"
-            )
-            return false
-        }
 
-        // Safe to send notification
-        sendFoodReminder(title, message)
-        return true
-    }
 
     /**
      * Sends a food reminder notification (internal - use sendFoodReminderIfSafe)
      */
-    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     private fun sendFoodReminder(title: String, message: String) {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -169,39 +149,39 @@ class SmartNotificationManager(private val context: Context) {
     /**
      * Check location and send notifications based on backend triggers
      */
-    suspend fun checkLocationAndNotify(userId: Int) {
-        // Check location permission
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-
-        try {
-            // Get current location
-            val location: Location = fusedLocationClient.lastLocation.await() ?: return
-
-            // Call backend to check for notification triggers
-            val response = container.appService.checkLocationTriggers(
-                userId = userId,
-                latitude = location.latitude,
-                longitude = location.longitude
-            )
-
-            if (response.isSuccessful && response.body()?.success == true) {
-                val triggers = response.body()!!.data.triggers
-                
-                // Show notifications for each trigger
-                triggers.forEach { trigger ->
-                    showLocationNotification(trigger)
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("SmartNotification", "Failed to check location triggers", e)
-        }
-    }
+//    suspend fun checkLocationAndNotify(userId: Int) {
+//        // Check location permission
+//        if (ActivityCompat.checkSelfPermission(
+//                context,
+//                Manifest.permission.ACCESS_FINE_LOCATION
+//            ) != PackageManager.PERMISSION_GRANTED
+//        ) {
+//            return
+//        }
+//
+//        try {
+//            // Get current location
+//            val location: Location = fusedLocationClient.lastLocation. ?: return
+//
+//            // Call backend to check for notification triggers
+//            val response = container.appService.checkLocationTriggers(
+//                userId = userId,
+//                latitude = location.latitude,
+//                longitude = location.longitude
+//            )
+//
+//            if (response.isSuccessful && response.body()?.success == true) {
+//                val triggers = response.body()!!.data.triggers
+//
+//                // Show notifications for each trigger
+//                triggers.forEach { trigger ->
+//                    showLocationNotification(trigger)
+//                }
+//            }
+//        } catch (e: Exception) {
+//            Log.e("SmartNotification", "Failed to check location triggers", e)
+//        }
+//    }
 
     /**
      * Show notification based on location trigger
@@ -252,12 +232,12 @@ class SmartNotificationManager(private val context: Context) {
     /**
      * Start periodic location monitoring
      */
-    fun startLocationMonitoring(userId: Int) {
-        CoroutineScope(Dispatchers.IO).launch {
-            while (true) {
-                checkLocationAndNotify(userId)
-                kotlinx.coroutines.delay(5 * 60 * 1000) // Check every 5 minutes
-            }
-        }
-    }
+//    fun startLocationMonitoring(userId: Int) {
+//        CoroutineScope(Dispatchers.IO).launch {
+//            while (true) {
+//                checkLocationAndNotify(userId)
+//                kotlinx.coroutines.delay(5 * 60 * 1000) // Check every 5 minutes
+//            }
+//        }
+//    }
 }

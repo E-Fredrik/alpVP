@@ -25,7 +25,7 @@ class DashboardViewModel(
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
     fun loadDashboardData(token: String) {
-        // Don't reload if already loading
+
         if (_uiState.value.loading) return
 
         viewModelScope.launch {

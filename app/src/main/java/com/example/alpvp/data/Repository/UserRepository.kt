@@ -1,8 +1,8 @@
 package com.example.alpvp.data.repository
 
 import com.example.alpvp.ui.model.User
-import com.example.alpvp.data.services.AppService
-import com.example.alpvp.data.services.UserGoals
+import com.example.alpvp.data.Service.AppService
+import com.example.alpvp.data.Service.UserGoals
 
 class UserRepository(private val appService: AppService) {
 

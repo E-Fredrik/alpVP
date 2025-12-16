@@ -1,21 +1,23 @@
-package com.example.alpvp.data.services
+package com.example.alpvp.data.Service
 
 import com.example.alpvp.ui.model.*
+import com.example.alpvp.data.dto.*
+import retrofit2.Response
 import retrofit2.http.*
 
 interface AppService {
 
     @GET("users/{userId}")
-    suspend fun getUser(@Path("userId") userId: Int): User
+    suspend fun getUser(@Path("userId") userId: Int): com.example.alpvp.ui.model.User
 
     @PUT("users/{userId}")
-    suspend fun updateUser(@Path("userId") userId: Int, @Body user: User): User
+    suspend fun updateUser(@Path("userId") userId: Int, @Body user: com.example.alpvp.ui.model.User): com.example.alpvp.ui.model.User
 
     @PATCH("users/{userId}/goals")
     suspend fun updateUserGoals(
         @Path("userId") userId: Int,
         @Body goals: UserGoals
-    ): User
+    ): com.example.alpvp.ui.model.User
 
     // Food Log endpoints
     @POST("food-logs")
@@ -56,89 +58,79 @@ interface AppService {
     
     // Notification Settings endpoints
     @GET("api/notification-settings")
-    suspend fun getNotificationSettings(): retrofit2.Response<com.example.alpvp.data.dto.NotificationSettingsResponse>
-    
+    suspend fun getNotificationSettings(): Response<NotificationSettingsResponse>
+
     @PUT("api/notification-settings")
     suspend fun updateNotificationSettings(
-        @Body settings: com.example.alpvp.data.dto.NotificationSettings
-    ): retrofit2.Response<com.example.alpvp.data.dto.NotificationSettingsResponse>
+        @Body settings: NotificationSettings
+    ): Response<NotificationSettingsResponse>
 
-    // ============================================================================
-    // Activity Log Endpoints
-    // ============================================================================
+    // Activity log
     @POST("api/activity-logs")
     suspend fun createActivityLog(
-        @Body request: com.example.alpvp.data.dto.ActivityLogRequest
-    ): retrofit2.Response<com.example.alpvp.data.dto.ActivityLogResponse>
+        @Body request: ActivityLogRequest
+    ): Response<ActivityLogResponse>
 
     @POST("api/activity-logs/bulk")
     suspend fun bulkCreateActivityLogs(
-        @Body request: com.example.alpvp.data.dto.BulkActivityLogRequest
-    ): retrofit2.Response<com.example.alpvp.data.dto.BulkActivityLogResponse>
+        @Body request: BulkActivityLogRequest
+    ): Response<BulkActivityLogResponse>
 
     @GET("api/activity-logs/user/{userId}")
     suspend fun getUserActivityLogs(
         @Path("userId") userId: Int
-    ): retrofit2.Response<com.example.alpvp.data.dto.ApiResponse<List<com.example.alpvp.data.dto.ActivityLog>>>
+    ): Response<List<ActivityLog>>
 
     @GET("api/activity-logs/user/{userId}/current")
     suspend fun getCurrentActivity(
         @Path("userId") userId: Int
-    ): retrofit2.Response<com.example.alpvp.data.dto.ActivityLogResponse>
+    ): Response<ActivityLogResponse>
 
-    // ============================================================================
     // Visit Log Endpoints
-    // ============================================================================
     @POST("api/visit-logs")
     suspend fun createVisitLog(
-        @Body request: com.example.alpvp.data.dto.VisitLogRequest
-    ): retrofit2.Response<com.example.alpvp.data.dto.VisitLogResponse>
+        @Body request: VisitLogRequest
+    ): Response<VisitLogResponse>
 
     @GET("api/visit-logs/user/{userId}")
     suspend fun getUserVisitLogs(
         @Path("userId") userId: Int
-    ): retrofit2.Response<com.example.alpvp.data.dto.ApiResponse<List<com.example.alpvp.data.dto.VisitLog>>>
+    ): Response<List<VisitLog>>
 
-    // ============================================================================
     // EMA Log Endpoints
-    // ============================================================================
     @POST("api/ema-logs")
     suspend fun createEmaLog(
-        @Body request: com.example.alpvp.data.dto.EmaLogRequest
-    ): retrofit2.Response<com.example.alpvp.data.dto.EmaLogResponse>
+        @Body request: EmaLogRequest
+    ): Response<EmaLogResponse>
 
     @GET("api/ema-logs/user/{userId}")
     suspend fun getUserEmaLogs(
         @Path("userId") userId: Int
-    ): retrofit2.Response<com.example.alpvp.data.dto.ApiResponse<List<com.example.alpvp.data.dto.EmaLog>>>
+    ): Response<List<EmaLog>>
 
-    // ============================================================================
     // Place Endpoints
-    // ============================================================================
     @GET("api/places")
-    suspend fun getAllPlaces(): retrofit2.Response<com.example.alpvp.data.dto.PlacesResponse>
+    suspend fun getAllPlaces(): Response<PlacesResponse>
 
     @GET("api/places/nearby")
     suspend fun getNearbyPlaces(
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double,
         @Query("radius") radiusKm: Double = 1.0
-    ): retrofit2.Response<com.example.alpvp.data.dto.PlacesResponse>
+    ): Response<PlacesResponse>
 
     @GET("api/places/category/{category}")
     suspend fun getPlacesByCategory(
         @Path("category") category: String
-    ): retrofit2.Response<com.example.alpvp.data.dto.PlacesResponse>
+    ): Response<PlacesResponse>
 
-    // ============================================================================
     // Notification Endpoints
-    // ============================================================================
     @GET("api/notifications/location-check/{userId}")
     suspend fun checkLocationTriggers(
         @Path("userId") userId: Int,
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double
-    ): retrofit2.Response<com.example.alpvp.data.dto.NotificationTriggersResponse>
+    ): Response<NotificationTriggersResponse>
 }
 
 // Helper data classes for requests

@@ -1,4 +1,4 @@
-package com.example.alpvp.data.services
+package com.example.alpvp.data.Service
 
 import android.Manifest
 import android.app.PendingIntent
@@ -9,8 +9,8 @@ import androidx.core.app.ActivityCompat
 import com.example.alpvp.data.dto.ActivityLogRequest
 import com.example.alpvp.data.dto.BulkActivityLogRequest
 import com.example.alpvp.ui.model.AARState
-import com.example.alpvp.ui.model.UserActivity
-import com.example.alpvp.ui.model.VulnerabilityLevel
+import com.example.alpvp.data.enums.UserActivity
+import com.example.alpvp.data.enums.VulnerabilityLevel
 import com.google.android.gms.location.ActivityRecognition
 import com.google.android.gms.location.ActivityRecognitionClient
 import com.google.android.gms.location.ActivityTransition
@@ -23,10 +23,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-/**
- * Activity and Attention Recognition (AAR) Service
- * Detects user activities and automatically syncs them to backend
- */
+
 class AARService(
     private val context: Context,
     private val appService: AppService
@@ -55,10 +52,7 @@ class AARService(
         private const val ACTIVITY_CONFIDENCE_THRESHOLD = 50
     }
 
-    /**
-     * Start monitoring user activities
-     * @param userId Current user's ID for backend syncing
-     */
+
     fun startMonitoring(userId: Int) {
         this.currentUserId = userId
         
@@ -93,13 +87,22 @@ class AARService(
     fun stopMonitoring() {
         try {
             val pendingIntent = createActivityDetectionPendingIntent()
-            activityRecognitionClient.removeActivityUpdates(pendingIntent)
-            
+
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACTIVITY_RECOGNITION
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                activityRecognitionClient.removeActivityUpdates(pendingIntent)
+            } else {
+                Log.w(TAG, "Activity recognition permission missing when attempting to stop updates")
+            }
+
             // Sync any remaining activities before stopping
             scope.launch {
                 syncActivitiesToBackend()
             }
-            
+
             Log.d(TAG, "Activity recognition stopped")
         } catch (e: Exception) {
             Log.e(TAG, "Error stopping monitoring: ${e.message}")
@@ -118,8 +121,7 @@ class AARService(
 
     private fun requestActivityTransitionUpdates() {
         val transitions = mutableListOf<ActivityTransition>()
-        
-        // Monitor transitions for key activities
+
         val activitiesToMonitor = listOf(
             DetectedActivity.WALKING,
             DetectedActivity.RUNNING,
@@ -210,12 +212,12 @@ class AARService(
                 UserActivity.RUNNING -> VulnerabilityLevel.HIGH
                 UserActivity.ON_BICYCLE -> VulnerabilityLevel.HIGH
                 UserActivity.IN_VEHICLE -> VulnerabilityLevel.CRITICAL
-                UserActivity.WALKING -> VulnerabilityLevel.MEDIUM
-                UserActivity.STILL -> VulnerabilityLevel.LOW
-                else -> VulnerabilityLevel.MEDIUM
+                UserActivity.WALKING -> VulnerabilityLevel.MODERATE
+                UserActivity.STILL -> VulnerabilityLevel.SAFE
+                else -> VulnerabilityLevel.MODERATE
             }
         }
-        return VulnerabilityLevel.LOW
+        return VulnerabilityLevel.SAFE
     }
 
     /**

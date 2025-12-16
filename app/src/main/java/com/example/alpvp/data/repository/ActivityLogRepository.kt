@@ -1,7 +1,9 @@
 package com.example.alpvp.data.repository
 
 import com.example.alpvp.data.dto.*
-import com.example.alpvp.data.services.AppService
+import com.example.alpvp.data.Service.AppService
+
+
 
 class ActivityLogRepository(private val appService: AppService) {
     
@@ -25,8 +27,9 @@ class ActivityLogRepository(private val appService: AppService) {
 
     suspend fun getUserActivityLogs(userId: Int): List<ActivityLog> {
         val response = appService.getUserActivityLogs(userId)
-        if (response.isSuccessful && response.body()?.success == true) {
-            return response.body()!!.data ?: emptyList()
+        if (response.isSuccessful) {
+            // This endpoint returns Response<List<ActivityLog>> (no wrapper), so use the body directly
+            return response.body() ?: emptyList()
         } else {
             throw Exception("Failed to get activity logs: ${response.message()}")
         }

@@ -1,7 +1,7 @@
 package com.example.alpvp.data.repository
 
 import com.example.alpvp.data.dto.*
-import com.example.alpvp.data.services.AppService
+import com.example.alpvp.data.Service.AppService
 
 class EmaLogRepository(private val appService: AppService) {
     
@@ -16,8 +16,8 @@ class EmaLogRepository(private val appService: AppService) {
 
     suspend fun getUserEmaLogs(userId: Int): List<EmaLog> {
         val response = appService.getUserEmaLogs(userId)
-        if (response.isSuccessful && response.body()?.success == true) {
-            return response.body()!!.data ?: emptyList()
+        if (response.isSuccessful) {
+            return response.body() ?: emptyList()
         } else {
             throw Exception("Failed to get EMA logs: ${response.message()}")
         }

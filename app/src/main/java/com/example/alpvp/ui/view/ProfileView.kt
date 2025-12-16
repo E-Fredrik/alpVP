@@ -7,7 +7,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccessibilityNew
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Notifications
@@ -23,38 +22,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModel
+import com.example.alpvp.data.Service.AppService
 import com.example.alpvp.ui.viewModel.AuthViewModel
 import com.example.alpvp.ui.viewModel.NotificationViewModel
+import com.example.alpvp.ui.viewModel.DashboardViewModel
 import com.example.alpvp.data.dto.NotificationSettings
-import kotlinx.coroutines.launch
-import com.example.alpvp.data.services.AppService
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     authViewModel: AuthViewModel,
-    dashboardViewModel: com.example.alpvp.ui.viewModel.DashboardViewModel,
-    appService: com.example.alpvp.data.services.AppService,
+    dashboardViewModel: DashboardViewModel,
+    appService: AppService,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current.applicationContext
-    
-    // Create NotificationViewModel
-    val notificationViewModel: NotificationViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                @Suppress("UNCHECKED_CAST")
-                return NotificationViewModel(appService, context) as T
-            }
-        }
-    )
-    val authUiState by authViewModel.uiState.collectAsStateWithLifecycle()
-    val dashboardUiState by dashboardViewModel.uiState.collectAsStateWithLifecycle()
+    // Get NotificationViewModel (AndroidViewModel provided by default factory)
+    val notificationViewModel: NotificationViewModel = viewModel<NotificationViewModel>()
+    // Capture initial values outside of composition to avoid reading StateFlow.value directly in composable
+    val authUiState by authViewModel.uiState.collectAsState()
+    val dashboardUiState by dashboardViewModel.uiState.collectAsState()
     val bg = Brush.verticalGradient(listOf(Color(0xFFF3F7FB), Color(0xFFEFF4FB)))
 
     // Load profile data if not already loaded
@@ -136,7 +124,7 @@ fun ProfileScreen(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            Divider(color = Color.LightGray)
+                            HorizontalDivider(color = Color.LightGray)
 
                             Spacer(modifier = Modifier.height(16.dp))
 
@@ -234,7 +222,7 @@ fun ProfileScreen(
                         .fillMaxWidth()
                         .height(52.dp)
                 ) {
-                    Icon(Icons.Default.ExitToApp, contentDescription = null, tint = Color.White)
+                    Icon(Icons.Filled.ExitToApp, contentDescription = null, tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Logout", color = Color.White, fontWeight = FontWeight.Bold)
                 }
@@ -250,7 +238,7 @@ fun NotificationSettingsDialog(
     onDismiss: () -> Unit
 ) {
     val scrollState = rememberScrollState()
-    val uiState by notificationViewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by notificationViewModel.uiState.collectAsState()
 
     // Local state for time settings (synced with ViewModel)
     var notificationEnabled by remember { mutableStateOf(true) }
@@ -279,7 +267,7 @@ fun NotificationSettingsDialog(
     // Handle success message - auto dismiss after showing
     LaunchedEffect(uiState.successMessage) {
         uiState.successMessage?.let {
-            kotlinx.coroutines.delay(1000)
+            delay(1000)
             notificationViewModel.clearSuccessMessage()
             onDismiss()
         }
@@ -340,7 +328,7 @@ fun NotificationSettingsDialog(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Divider(color = Color.LightGray)
+                    HorizontalDivider(color = Color.LightGray)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Time settings (only show if notifications are enabled)
@@ -443,7 +431,7 @@ fun NotificationSettingsDialog(
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFF4F8BFF)
                             ),
-                            enabled = !uiState.loading
+                            enabled = !uiState.loading && uiState.settings != null
                         ) {
                             if (uiState.loading) {
                                 CircularProgressIndicator(

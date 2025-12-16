@@ -1,7 +1,7 @@
 package com.example.alpvp.data.repository
 
 import com.example.alpvp.data.dto.*
-import com.example.alpvp.data.services.AppService
+import com.example.alpvp.data.Service.AppService
 
 class PlaceRepository(private val appService: AppService) {
     

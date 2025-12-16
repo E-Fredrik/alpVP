@@ -93,7 +93,7 @@ fun LoginScreen(
                         Spacer(modifier = Modifier.width(16.dp))
 
                         Column {
-                            Text("BUMP", style = MaterialTheme.typography.titleMedium)
+                            Text("Nudge", style = MaterialTheme.typography.titleMedium)
                             Text("Calorie Tracker", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                         }
                     }

@@ -14,10 +14,10 @@ import com.example.alpvp.data.repository.EmaLogRepository
 import com.example.alpvp.data.repository.PlaceRepository
 import com.example.alpvp.data.Service.FoodService
 import com.example.alpvp.data.Service.UserService
-import com.example.alpvp.data.services.DashboardService
-import com.example.alpvp.data.services.AppService
+import com.example.alpvp.data.Service.AppService
+import com.example.alpvp.data.Service.DashboardService
 import com.example.alpvp.data.UserPreferencesRepository
-import com.example.alpvp.data.services.AARService
+import com.example.alpvp.data.Service.AARService
 import com.example.alpvp.notification.SmartNotificationManager
 import com.example.alpvp.notification.NotificationScheduler
 import com.example.alpvp.data.utils.AuthInterceptor
@@ -28,7 +28,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class AppContainer(private val context: Context) {
     companion object {
-        val BASE_URL = "http://10.0.181.207:3000/"
+        val BASE_URL = "http://192.168.1.219:3000/"
         //10.0.181.207
         //val BASE_URL = "http://10.152.62.60:3000/"
     }

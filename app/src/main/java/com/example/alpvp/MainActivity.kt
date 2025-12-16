@@ -11,22 +11,29 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
-import com.example.alpvp.data.container.AppContainer
-import com.example.alpvp.notification.NotificationScheduler
 import com.example.alpvp.ui.route.AppRouting
 import com.example.alpvp.ui.theme.AlpVPTheme
-import kotlinx.coroutines.launch
+import com.example.alpvp.ui.viewModel.NotificationViewModel
 
 class MainActivity : ComponentActivity() {
+
+    private val notificationViewModel: NotificationViewModel by viewModels()
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
             Log.d("MainActivity", "Notification permission granted")
-            loadAndScheduleNotifications()
+            notificationViewModel.loadAndScheduleNotifications()
         } else {
             Log.d("MainActivity", "Notification permission denied")
         }
@@ -35,13 +42,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
+
         // Request notification permission for Android 13+
         askNotificationPermission()
-        
+
         setContent {
             AlpVPTheme {
-                AppRouting()
+                // Wrap the app routing and add a debug button overlayed at bottom-end
+                AppContent(notificationViewModel = notificationViewModel)
             }
         }
     }
@@ -69,37 +77,37 @@ class MainActivity : ComponentActivity() {
                 Log.w("MainActivity", "⚠️ SCHEDULE_EXACT_ALARM permission not granted!")
                 Log.w("MainActivity", "Notifications may not work precisely. Please enable in settings.")
                 // Still try to load notifications
-                loadAndScheduleNotifications()
+                notificationViewModel.loadAndScheduleNotifications()
             } else {
                 Log.d("MainActivity", "✅ SCHEDULE_EXACT_ALARM permission granted")
-                loadAndScheduleNotifications()
+                notificationViewModel.loadAndScheduleNotifications()
             }
         } else {
-            loadAndScheduleNotifications()
+            notificationViewModel.loadAndScheduleNotifications()
         }
     }
+}
 
-    private fun loadAndScheduleNotifications() {
-        val appContainer = AppContainer(applicationContext)
-        lifecycleScope.launch {
-            try {
-                val response = appContainer.appService.getNotificationSettings()
-                if (response.isSuccessful && response.body() != null) {
-                    val settings = response.body()!!.data
-                    
-                    if (settings.notificationEnabled) {
-                        val scheduler = NotificationScheduler(applicationContext)
-                        scheduler.scheduleNotifications(
-                            breakfastTime = settings.breakfastTime,
-                            lunchTime = settings.lunchTime,
-                            dinnerTime = settings.dinnerTime,
-                            snackTime = settings.snackTime
-                        )
-                        Log.d("MainActivity", "✅ Notifications scheduled")
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("MainActivity", "Failed to schedule", e)
+@Composable
+private fun AppContent(notificationViewModel: NotificationViewModel) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        AppRouting()
+
+        // Debug button pinned to bottom-end for quick testing of trySmartNotify
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Bottom,
+            horizontalAlignment = Alignment.End
+        ) {
+            Button(onClick = {
+                notificationViewModel.trySmartNotify(
+                    title = "Debug: Test",
+                    message = "This is a debug notification"
+                )
+            }) {
+                Text(text = "Debug Notify")
             }
         }
     }
