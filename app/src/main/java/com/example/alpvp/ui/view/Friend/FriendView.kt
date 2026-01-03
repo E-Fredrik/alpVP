@@ -1,5 +1,6 @@
 package com.example.alpvp.ui.view.Friend
 
+import android.hardware.lights.Light
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,12 +31,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.alpvp.R
+import com.example.alpvp.ui.model.Friend
 
 @Composable
-fun FriendView() {
+fun FriendView(friend: List<Friend>) {
     var addFriend by rememberSaveable { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
-    var friendCount by remember { mutableStateOf(0) }
+    val friendCount = friend.size
 
     if (!addFriend) {
         Column(

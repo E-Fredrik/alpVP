@@ -18,9 +18,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.alpvp.R
+import com.example.alpvp.data.dto.FriendFoodLog
+import com.example.alpvp.ui.model.Friend
 
 @Composable
-fun FriendCardView() {
+fun FriendCardView(friend: Friend, logs: List<FriendFoodLog>) {
+    val todayStart = System.currentTimeMillis() - (System.currentTimeMillis() % (24 * 60 * 60 * 1000L))
+    val logsToday = logs.count { it.friendId == friend.userId && it.timestamp >= todayStart }
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
@@ -34,14 +38,14 @@ fun FriendCardView() {
                 painter = painterResource(R.drawable.screenshot__1177_),
                 "Friend pfp"
             )
-            Text("John Doe",
+            Text("${friend.username}",
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF000000),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .padding(top = 8.dp)
             )
-            Text("# logs today",
+            Text("$logsToday logs today",
                 color = Color(0x80000000),
                 textAlign = TextAlign.Center,
                 modifier = Modifier

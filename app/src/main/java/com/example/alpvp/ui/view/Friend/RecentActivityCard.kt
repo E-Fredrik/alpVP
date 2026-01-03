@@ -21,9 +21,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.alpvp.R
+import com.example.alpvp.data.dto.FriendFoodLog
 
 @Composable
-fun RecentActivityCardView() {
+fun RecentActivityCardView(log: FriendFoodLog) {
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
@@ -43,8 +44,8 @@ fun RecentActivityCardView() {
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
                 ) {
-                    Text("John Doe")
-                    Text("Hamburger",
+                    Text(log.friendName)
+                    Text(log.foodName,
                         color = Color(0xBF000000)
                     )
                     Row {
@@ -57,7 +58,7 @@ fun RecentActivityCardView() {
                                 modifier = Modifier
                                     .size(18.dp)
                             )
-                            Text("# cal",
+                            Text("${log.calories} cal",
                                 color = Color(0xBF000000)
                             )
                         }
@@ -72,7 +73,7 @@ fun RecentActivityCardView() {
                                 modifier = Modifier
                                     .size(18.dp)
                             )
-                            Text("#g protein",
+                            Text("${log.quantity}g protein",
                                 color = Color(0xBF000000)
                             )
                         }
