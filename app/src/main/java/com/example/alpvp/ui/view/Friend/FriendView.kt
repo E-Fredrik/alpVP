@@ -35,6 +35,7 @@ import com.example.alpvp.R
 fun FriendView() {
     var addFriend by rememberSaveable { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
+    var friendCount by remember { mutableStateOf(0) }
 
     if (!addFriend) {
         Column(
@@ -74,7 +75,7 @@ fun FriendView() {
                 modifier = Modifier
                     .padding(top = 16.dp)
             ) {
-                Text("Your Friends ()",
+                Text("Your Friends ($friendCount)",
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
                     color = Color(0xFF000000)

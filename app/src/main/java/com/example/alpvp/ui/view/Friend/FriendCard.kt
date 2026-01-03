@@ -27,8 +27,7 @@ fun FriendCardView() {
         Column(
             modifier = Modifier
                 .background(Color(0xFFFFFFFF))
-                .fillMaxWidth()
-                .padding(16.dp),
+                .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
@@ -38,11 +37,15 @@ fun FriendCardView() {
             Text("John Doe",
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF000000),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .padding(top = 8.dp)
             )
             Text("# logs today",
                 color = Color(0x80000000),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .padding(top = 8.dp)
             )
         }
     }
