@@ -53,7 +53,7 @@ fun recentActivity(data: List<FriendFoodLog>){
 
 @Composable
 fun FriendView(friend: List<Friend>,
-               sendEmail: () -> Unit
+               friendViewModel: FriendViewModel
                ) {
     var addFriend by rememberSaveable { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
@@ -187,7 +187,7 @@ fun FriendView(friend: List<Friend>,
                 TextButton(
                     onClick = {
                         addFriend = false
-                        sendEmail
+                        friendViewModel.searchFriends(search)
                               },
                     enabled = true,
                     modifier = Modifier
