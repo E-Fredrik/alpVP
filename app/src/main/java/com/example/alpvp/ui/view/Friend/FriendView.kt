@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,12 +33,27 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.alpvp.R
+import com.example.alpvp.data.dto.FriendFoodLog
 import com.example.alpvp.ui.model.Friend
 import com.example.alpvp.ui.viewModel.FriendViewModel
 
 @Composable
+fun yourFriends(data: List<FriendFoodLog>){
+    LazyColumn {
+        items(data){friendFoodlog -> FriendCardView(friendFoodlog = friendFoodlog)}
+    }
+}
+
+@Composable
+fun recentActivity(data: List<FriendFoodLog>){
+    LazyColumn {
+        items(data){friendFoodlog -> RecentActivityCardView(friendFoodlog = friendFoodlog)}
+    }
+}
+
+@Composable
 fun FriendView(friend: List<Friend>,
-               friendViewModel: FriendViewModel
+               sendEmail: () -> Unit
                ) {
     var addFriend by rememberSaveable { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
@@ -86,6 +103,7 @@ fun FriendView(friend: List<Friend>,
                     color = Color(0xFF000000)
                 )
             }
+            yourFriends()
             Column(
                 modifier = Modifier
                     .padding(top = 16.dp)
@@ -96,6 +114,7 @@ fun FriendView(friend: List<Friend>,
                     color = Color(0xFF000000)
                 )
             }
+            recentActivity()
         }
     }else{
         Column(
@@ -167,7 +186,8 @@ fun FriendView(friend: List<Friend>,
                 )
                 TextButton(
                     onClick = {
-                        friendViewModel.searchFriends(search)
+                        addFriend = false
+                        sendEmail
                               },
                     enabled = true,
                     modifier = Modifier
