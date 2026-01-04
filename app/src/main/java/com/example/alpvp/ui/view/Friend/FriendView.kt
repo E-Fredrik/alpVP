@@ -32,9 +32,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.alpvp.R
 import com.example.alpvp.ui.model.Friend
+import com.example.alpvp.ui.viewModel.FriendViewModel
 
 @Composable
-fun FriendView(friend: List<Friend>) {
+fun FriendView(friend: List<Friend>,
+               friendViewModel: FriendViewModel
+               ) {
     var addFriend by rememberSaveable { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
     val friendCount = friend.size
@@ -163,7 +166,9 @@ fun FriendView(friend: List<Friend>) {
                         .fillMaxWidth()
                 )
                 TextButton(
-                    onClick = {},
+                    onClick = {
+                        friendViewModel.searchFriends(search)
+                              },
                     enabled = true,
                     modifier = Modifier
                         .padding(top = 8.dp)
