@@ -94,6 +94,7 @@ class AppContainer(private val context: Context) {
 
 
 
+
     val friendRepository: FriendRepository by lazy {
         FriendRepository(appService)
     }

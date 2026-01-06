@@ -37,10 +37,14 @@ import com.example.alpvp.ui.view.LoginScreen
 import com.example.alpvp.ui.view.ProfileScreen
 import com.example.alpvp.ui.view.RegisterScreen
 import com.example.alpvp.ui.view.FriendsScreen
+import com.example.alpvp.ui.view.SettingsView
+import com.example.alpvp.ui.view.PlacesView
 import com.example.alpvp.ui.viewModel.DashboardViewModel
 import com.example.alpvp.ui.viewModel.AuthViewModel
 import com.example.alpvp.ui.viewModel.FoodViewModel
 import com.example.alpvp.ui.viewModel.AARViewModel
+import com.example.alpvp.ui.viewModel.NotificationViewModel
+import com.example.alpvp.ui.viewModel.PlaceViewModel
 
 enum class AppScreens (val title: String, val icon: ImageVector?= null) {
     HOME("Home", Icons.Filled.Home),
@@ -49,6 +53,8 @@ enum class AppScreens (val title: String, val icon: ImageVector?= null) {
     PROFILE("Profile", Icons.Filled.Person),
     LOGIN("Login"),
     REGISTER("Register"),
+    SETTINGS("Settings"),
+    PLACES("Places"),
     ERROR("ERROR")
 }
 
@@ -88,8 +94,9 @@ fun AppRouting() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
+    val context = LocalContext.current
     val container = AppContainer(
-        context = LocalContext.current.applicationContext
+        context = context.applicationContext
     )
 
     // AuthViewModel to observe login token
@@ -115,7 +122,10 @@ fun AppRouting() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 if (modelClass.isAssignableFrom(DashboardViewModel::class.java)) {
                     @Suppress("UNCHECKED_CAST")
-                    return DashboardViewModel(container.dashboardRepository) as T
+                    return DashboardViewModel(
+                        container.dashboardRepository,
+                        container.dailySummaryRepository
+                    ) as T
                 }
                 throw IllegalArgumentException("Unknown ViewModel class")
             }
@@ -135,6 +145,32 @@ fun AppRouting() {
         }
     )
 
+    // NotificationViewModel for notification settings
+    val notificationViewModel: NotificationViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                if (modelClass.isAssignableFrom(NotificationViewModel::class.java)) {
+                    @Suppress("UNCHECKED_CAST")
+                    return NotificationViewModel(context.applicationContext as android.app.Application) as T
+                }
+                throw IllegalArgumentException("Unknown ViewModel class")
+            }
+        }
+    )
+
+    // PlaceViewModel for places management
+    val placeViewModel: PlaceViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                if (modelClass.isAssignableFrom(PlaceViewModel::class.java)) {
+                    @Suppress("UNCHECKED_CAST")
+                    return PlaceViewModel(container.placeRepository) as T
+                }
+                throw IllegalArgumentException("Unknown ViewModel class")
+            }
+        }
+    )
+
     Scaffold(
         bottomBar = {
             BottomNavBar(
@@ -143,8 +179,7 @@ fun AppRouting() {
                 items = listOf(
                     AppScreens.HOME,
                     AppScreens.FOOD,
-                    AppScreens.FRIENDS,
-                    AppScreens.PROFILE
+                    AppScreens.FRIENDS
                 )
             )
         }
@@ -190,7 +225,8 @@ fun AppRouting() {
                 DashboardScreen(
                     dashboardViewModel = dashboardViewModel,
                     aarViewModel = aarViewModel,
-                    onOpenFood = { navController.navigate(AppScreens.FOOD.title) }
+                    onOpenFood = { navController.navigate(AppScreens.FOOD.title) },
+                    onNavigateToProfile = { navController.navigate(AppScreens.PROFILE.title) }
                 )
             }
 
@@ -248,7 +284,13 @@ fun AppRouting() {
                     ProfileScreen(
                         authViewModel = authViewModel,
                         dashboardViewModel = dashboardViewModel,
-                        appService = container.appService
+                        appService = container.appService,
+                        onNavigateToSettings = {
+                            navController.navigate(AppScreens.SETTINGS.title)
+                        },
+                        onNavigateToPlaces = {
+                            navController.navigate(AppScreens.PLACES.title)
+                        }
                     )
                 }
             }
@@ -272,6 +314,40 @@ fun AppRouting() {
                                 launchSingleTop = true
                             }
                         }
+                    )
+                }
+            }
+
+            composable(AppScreens.SETTINGS.title) {
+                val authUiState by authViewModel.uiState.collectAsState()
+                if (authUiState.token == null) {
+                    LaunchedEffect(Unit) {
+                        navController.navigate(AppScreens.LOGIN.title) {
+                            launchSingleTop = true
+                        }
+                    }
+                    Text("Redirecting to Login...")
+                } else {
+                    SettingsView(
+                        notificationViewModel = notificationViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+            }
+
+            composable(AppScreens.PLACES.title) {
+                val authUiState by authViewModel.uiState.collectAsState()
+                if (authUiState.token == null) {
+                    LaunchedEffect(Unit) {
+                        navController.navigate(AppScreens.LOGIN.title) {
+                            launchSingleTop = true
+                        }
+                    }
+                    Text("Redirecting to Login...")
+                } else {
+                    PlacesView(
+                        placeViewModel = placeViewModel,
+                        onBack = { navController.popBackStack() }
                     )
                 }
             }

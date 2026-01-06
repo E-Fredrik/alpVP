@@ -36,6 +36,8 @@ fun ProfileScreen(
     authViewModel: AuthViewModel,
     dashboardViewModel: DashboardViewModel,
     appService: AppService,
+    onNavigateToSettings: () -> Unit = {},
+    onNavigateToPlaces: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // Get NotificationViewModel (AndroidViewModel provided by default factory)
@@ -76,7 +78,9 @@ fun ProfileScreen(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
             ) {
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -184,14 +188,9 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Notification Settings State
-                var showNotificationDialog by remember { mutableStateOf(false) }
-
                 // Notification Settings button
                 Button(
-                    onClick = {
-                        showNotificationDialog = true
-                    },
+                    onClick = onNavigateToSettings,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F8BFF)),
                     modifier = Modifier
@@ -203,12 +202,21 @@ fun ProfileScreen(
                     Text("Notification Settings", color = Color.White, fontWeight = FontWeight.Bold)
                 }
 
-                // Show notification settings dialog
-                if (showNotificationDialog) {
-                    NotificationSettingsDialog(
-                        notificationViewModel = notificationViewModel,
-                        onDismiss = { showNotificationDialog = false }
-                    )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Browse Places button
+                Button(
+                    onClick = onNavigateToPlaces,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                ) {
+                    Text("📍", fontSize = 20.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Browse Places", color = Color.White, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))

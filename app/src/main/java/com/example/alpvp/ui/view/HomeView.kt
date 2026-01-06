@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,11 +30,13 @@ import com.example.alpvp.data.dto.FoodInRecentLog
 import com.example.alpvp.data.dto.WeeklyProgressItem
 import com.example.alpvp.data.dto.FriendFoodLog
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     dashboardViewModel: DashboardViewModel,
     aarViewModel: AARViewModel,
-    onOpenFood: () -> Unit = {}
+    onOpenFood: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val uiState by dashboardViewModel.uiState.collectAsState()
 
@@ -51,10 +54,37 @@ fun DashboardScreen(
         }
     }
 
-    DashboardScreenContent(
-        uiState = uiState,
-        onOpenFood = onOpenFood
-    )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "Dashboard",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToProfile) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = Gray900
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = BackgroundLight
+                )
+            )
+        }
+    ) { padding ->
+        DashboardScreenContent(
+            uiState = uiState,
+            onOpenFood = onOpenFood,
+            paddingValues = padding
+        )
+    }
 }
 
 
@@ -109,7 +139,8 @@ private fun calculateStreak(foodLogs: List<RecentFoodLog>): Int {
 @Composable
 private fun DashboardScreenContent(
     uiState: DashboardUiState,
-    onOpenFood: () -> Unit = {}
+    onOpenFood: () -> Unit = {},
+    paddingValues: PaddingValues = PaddingValues(0.dp)
 ) {
     
     fun getBMIStatus(): String {
@@ -120,7 +151,8 @@ private fun DashboardScreenContent(
         return "BMI: %.1f (Goal: %.1f)".format(currentBMI, profile.bmiGoal)
     }
 
-    val todayCalories = uiState.dashboardData?.todayCalories ?: 0
+    // Use dailySummary if available (more accurate), otherwise fallback to dashboardData
+    val todayCalories = uiState.dailySummary?.totalCaloriesIn ?: uiState.dashboardData?.todayCalories ?: 0
 
     // Calculate calorie goal based on user's BMI goal
     val caloriesGoal = uiState.userProfile?.let { profile ->
@@ -177,25 +209,21 @@ private fun DashboardScreenContent(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundLight)
+            .padding(paddingValues)
             .verticalScroll(rememberScrollState())
     ) {
-        // Header
+        // BMI Status
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(top = 32.dp, bottom = 24.dp)
+                .padding(top = 16.dp, bottom = 24.dp)
         ) {
             Text(
-                text = "Dashboard",
-                style = MaterialTheme.typography.headlineLarge,
-                color = Gray900
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
                 text = getBMIStatus(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = Gray600
+                style = MaterialTheme.typography.bodyLarge,
+                color = Gray600,
+                fontWeight = FontWeight.Medium
             )
         }
 
