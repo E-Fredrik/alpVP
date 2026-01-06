@@ -27,9 +27,11 @@ class DashboardViewModel(
 
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
+    
+    private var cachedToken: String? = null
 
     fun loadDashboardData(token: String) {
-
+        cachedToken = token
         if (_uiState.value.loading) return
 
         viewModelScope.launch {
@@ -51,9 +53,16 @@ class DashboardViewModel(
                 var dailySummary: DailySummary? = null
                 if (profile != null) {
                     try {
-                        val today = System.currentTimeMillis()
+                        // Get today's date at midnight
+                        val calendar = java.util.Calendar.getInstance()
+                        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                        calendar.set(java.util.Calendar.MINUTE, 0)
+                        calendar.set(java.util.Calendar.SECOND, 0)
+                        calendar.set(java.util.Calendar.MILLISECOND, 0)
+                        val today = calendar.timeInMillis
+                        
                         dailySummary = dailySummaryRepository.getDailySummary(profile.userId, today)
-                        android.util.Log.d("DashboardViewModel", "Daily summary loaded: ${dailySummary.totalCaloriesIn} calories")
+                        android.util.Log.d("DashboardViewModel", "Daily summary loaded for date: $today, calories: ${dailySummary.totalCaloriesIn}")
                     } catch (e: Exception) {
                         android.util.Log.w("DashboardViewModel", "Failed to load daily summary: ${e.message}")
                         // Don't fail the whole load if daily summary fails
@@ -91,5 +100,12 @@ class DashboardViewModel(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+    
+    fun refreshDashboardData() {
+        cachedToken?.let { token ->
+            android.util.Log.d("DashboardViewModel", "Refreshing dashboard data...")
+            loadDashboardData(token)
+        }
     }
 }

@@ -13,37 +13,40 @@ import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
     primary = ElectricBlue,
+    onPrimary = SurfaceWhite,
+    primaryContainer = ElectricBlueDark,
     secondary = CoralRed,
-    tertiary = WarmAmber,
+    onSecondary = SurfaceWhite,
+    tertiary = MintGreen,
     background = Gray900,
-    surface = Gray700,
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.Black,
-    onBackground = Gray50,
-    onSurface = Gray50,
-    error = Error
+    surface = Gray800,
+    error = ErrorRed,
+    onBackground = SurfaceWhite,
+    onSurface = Gray100
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = ElectricBlue,
+    onPrimary = SurfaceWhite,
+    primaryContainer = ElectricBlueLight,
     secondary = CoralRed,
-    tertiary = WarmAmber,
+    onSecondary = SurfaceWhite,
+    secondaryContainer = CoralRedDark,
+    tertiary = MintGreen,
     background = BackgroundLight,
     surface = SurfaceWhite,
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.Black,
+    error = ErrorRed,
     onBackground = Gray900,
     onSurface = Gray900,
-    error = Error
+    surfaceVariant = Gray100,
+    onSurfaceVariant = Gray600
 )
 
 @Composable
 fun AlpVPTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // Dynamic color disabled for brand consistency
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

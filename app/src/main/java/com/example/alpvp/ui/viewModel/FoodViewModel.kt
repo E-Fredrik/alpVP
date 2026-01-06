@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alpvp.data.Repository.FoodRepository
+import com.example.alpvp.data.Service.LocationService
 import com.example.alpvp.data.dto.*
 import com.example.alpvp.ui.model.FoodLogModel
 import com.example.alpvp.ui.model.FoodInLogItemModel
@@ -32,6 +33,7 @@ data class SelectedFoodEntry(
 
 class FoodViewModel(
     private val foodRepository: FoodRepository,
+    private val locationService: LocationService,
     private val token: String,
     private val userId: Int
 ) : ViewModel() {
@@ -191,10 +193,14 @@ class FoodViewModel(
                     )
                 }
 
+                // Get real GPS coordinates
+                val (latitude, longitude) = locationService.getLocationCoordinates()
+                Log.d("FoodViewModel", "Using location: lat=$latitude, lon=$longitude")
+
                 val logRequest = FoodLogRequest(
                     foods = foodRequests,
-                    latitude = 12.34,
-                    longitude = 56.78,
+                    latitude = latitude,
+                    longitude = longitude,
                     timestamp = System.currentTimeMillis(),
                     user_id = userId
                 )

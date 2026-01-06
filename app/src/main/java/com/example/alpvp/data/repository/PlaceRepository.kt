@@ -31,4 +31,9 @@ class PlaceRepository(private val appService: AppService) {
             throw Exception("Failed to get places by category: ${response.message()}")
         }
     }
+
+    suspend fun getNearbyRestaurants(latitude: Double, longitude: Double, radiusKm: Double = 1.0): List<Place> {
+        val nearbyPlaces = getNearbyPlaces(latitude, longitude, radiusKm)
+        return nearbyPlaces.filter { it.category == "RESTAURANT" }
+    }
 }

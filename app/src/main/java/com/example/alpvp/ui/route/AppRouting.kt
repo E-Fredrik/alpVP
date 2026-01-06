@@ -246,6 +246,7 @@ fun AppRouting() {
                                 @Suppress("UNCHECKED_CAST")
                                 return FoodViewModel(
                                     container.foodRepository,
+                                    container.locationService,
                                     authUiState.token!!,
                                     authUiState.userId!!
                                 ) as T
@@ -281,15 +282,26 @@ fun AppRouting() {
                     }
                     Text("Redirecting to Login...")
                 } else {
+                    val foodViewModel: FoodViewModel = viewModel(
+                        factory = object : ViewModelProvider.Factory {
+                            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                @Suppress("UNCHECKED_CAST")
+                                return FoodViewModel(
+                                    container.foodRepository,
+                                    container.locationService,
+                                    authUiState.token!!,
+                                    authUiState.userId!!
+                                ) as T
+                            }
+                        }
+                    )
                     ProfileScreen(
                         authViewModel = authViewModel,
                         dashboardViewModel = dashboardViewModel,
+                        foodViewModel = foodViewModel,
                         appService = container.appService,
                         onNavigateToSettings = {
                             navController.navigate(AppScreens.SETTINGS.title)
-                        },
-                        onNavigateToPlaces = {
-                            navController.navigate(AppScreens.PLACES.title)
                         }
                     )
                 }

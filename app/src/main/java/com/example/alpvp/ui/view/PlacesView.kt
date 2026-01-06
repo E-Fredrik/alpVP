@@ -36,16 +36,26 @@ fun PlacesView(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Places") },
+                title = { 
+                    Text(
+                        "Places",
+                        color = SurfaceWhite,
+                        fontWeight = FontWeight.Bold
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(
+                            Icons.Default.ArrowBack, 
+                            "Back",
+                            tint = SurfaceWhite
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = ElectricBlue,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    titleContentColor = SurfaceWhite,
+                    navigationIconContentColor = SurfaceWhite
                 )
             )
         }
@@ -68,7 +78,9 @@ fun PlacesView(
                         label = { Text("All") },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = ElectricBlue,
-                            selectedLabelColor = Color.White
+                            selectedLabelColor = SurfaceWhite,
+                            containerColor = Gray100,
+                            labelColor = Gray700
                         )
                     )
                 }
@@ -79,7 +91,9 @@ fun PlacesView(
                         label = { Text(category) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = ElectricBlue,
-                            selectedLabelColor = Color.White
+                            selectedLabelColor = SurfaceWhite,
+                            containerColor = Gray100,
+                            labelColor = Gray700
                         )
                     )
                 }
@@ -113,7 +127,10 @@ fun PlacesView(
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
                             onClick = { placeViewModel.loadAllPlaces() },
-                            colors = ButtonDefaults.buttonColors(containerColor = ElectricBlue)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = ElectricBlue,
+                                contentColor = SurfaceWhite
+                            )
                         ) {
                             Text("Retry")
                         }
@@ -250,11 +267,11 @@ fun getCategoryEmoji(category: String): String = when(category) {
 }
 
 fun getCategoryColor(category: String): Color = when(category) {
-    "RESTAURANT" -> Color(0xFFFFE5E5)
-    "PARK" -> Color(0xFFE5F5E5)
-    "GYM" -> Color(0xFFE5E5FF)
-    "STORE" -> Color(0xFFFFF5E5)
-    "OTHER" -> Color(0xFFF0F0F0)
-    else -> Color(0xFFF0F0F0)
+    "RESTAURANT" -> CategoryRestaurant
+    "PARK" -> CategoryPark
+    "GYM" -> CategoryGym
+    "STORE" -> CategoryStore
+    "OTHER" -> CategoryOther
+    else -> CategoryOther
 }
 

@@ -17,6 +17,7 @@ import com.example.alpvp.data.Service.AppService
 import com.example.alpvp.data.Service.DashboardService
 import com.example.alpvp.data.Repository.UserPreferencesRepository
 import com.example.alpvp.data.Service.AARService
+import com.example.alpvp.data.Service.LocationService
 import com.example.alpvp.notification.SmartNotificationManager
 import com.example.alpvp.notification.NotificationScheduler
 import com.example.alpvp.data.utils.AuthInterceptor
@@ -126,6 +127,11 @@ class AppContainer(private val context: Context) {
     // UserPreferences for token storage
     val userPreferencesRepository: UserPreferencesRepository by lazy {
         UserPreferencesRepository(context)
+    }
+
+    // Location Service for GPS coordinates
+    val locationService: LocationService by lazy {
+        LocationService(context)
     }
 
     // AAR Service for activity and attention recognition

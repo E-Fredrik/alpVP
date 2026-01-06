@@ -1,11 +1,13 @@
 package com.example.alpvp.ui.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -18,7 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.alpvp.ui.viewModel.NotificationViewModel
+import com.example.alpvp.ui.theme.*
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,18 +40,33 @@ fun SettingsView(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Notification Settings") },
+                title = { 
+                    Text(
+                        "Notification Settings",
+                        color = SurfaceWhite,
+                        fontWeight = FontWeight.Bold
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack, 
+                            contentDescription = "Back",
+                            tint = SurfaceWhite
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = ElectricBlue,
+                    navigationIconContentColor = SurfaceWhite
+                )
             )
         }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(BackgroundLight)
                 .padding(padding)
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
@@ -57,14 +76,16 @@ fun SettingsView(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = ElectricBlue)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
             // Notification Toggle Card
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Row(
                     modifier = Modifier
@@ -77,12 +98,13 @@ fun SettingsView(
                         Text(
                             "Enable Notifications",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = Gray900
                         )
                         Text(
                             "Receive reminders to log your meals",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Gray600
                         )
                     }
                     Switch(
@@ -97,7 +119,13 @@ fun SettingsView(
                                 snackTime = settings?.snackTime
                             )
                         },
-                        enabled = !uiState.loading
+                        enabled = !uiState.loading,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = SurfaceWhite,
+                            checkedTrackColor = ElectricBlue,
+                            uncheckedThumbColor = Gray400,
+                            uncheckedTrackColor = Gray200
+                        )
                     )
                 }
             }
@@ -108,12 +136,13 @@ fun SettingsView(
             Text(
                 "Meal Reminder Times",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Gray900
             )
             Text(
                 "Set when you'd like to receive meal logging reminders",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Gray600
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -201,9 +230,10 @@ fun SettingsView(
             uiState.successMessage?.let { message ->
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF4CAF50).copy(alpha = 0.1f)
+                        containerColor = SuccessGreenLight
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
@@ -213,8 +243,9 @@ fun SettingsView(
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
                             message,
-                            color = Color(0xFF2E7D32),
-                            style = MaterialTheme.typography.bodyMedium
+                            color = SuccessGreen,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
@@ -228,9 +259,10 @@ fun SettingsView(
             uiState.error?.let { error ->
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
+                        containerColor = ErrorRedLight
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
@@ -240,7 +272,7 @@ fun SettingsView(
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
                             error,
-                            color = MaterialTheme.colorScheme.error,
+                            color = ErrorRed,
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -265,7 +297,11 @@ fun MealTimeCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = enabled) { showTimePicker = true }
+            .clickable(enabled = enabled) { showTimePicker = true },
+        colors = CardDefaults.cardColors(
+            containerColor = if (enabled) SurfaceWhite else Gray100
+        ),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Row(
             modifier = Modifier
@@ -286,7 +322,8 @@ fun MealTimeCard(
                 Text(
                     mealName,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    color = if (enabled) Gray900 else Gray500
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -294,13 +331,13 @@ fun MealTimeCard(
                     time,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (enabled) ElectricBlue else Gray400
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = "Edit time",
-                    tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = if (enabled) ElectricBlue else Gray400,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -388,4 +425,108 @@ fun CustomTimePickerDialog(
             }
         }
     )
+}
+
+@Composable
+fun NumberPickerColumn(
+    value: Int,
+    onValueChange: (Int) -> Unit,
+    range: IntRange,
+    modifier: Modifier = Modifier
+) {
+    val coroutineScope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
+    
+    // Calculate the index for the current value
+    val currentIndex = value - range.first
+    
+    // Auto-scroll to center the selected item when value changes
+    LaunchedEffect(value) {
+        listState.scrollToItem(
+            index = currentIndex,
+            scrollOffset = 0
+        )
+    }
+
+    // Snap to nearest item when scrolling stops
+    LaunchedEffect(listState.isScrollInProgress) {
+        if (!listState.isScrollInProgress) {
+            // Get the first visible item after scroll stops
+            val firstVisibleIndex = listState.firstVisibleItemIndex
+            val firstVisibleOffset = listState.firstVisibleItemScrollOffset
+            
+            // Calculate which item is closest to center
+            val itemHeight = 50 // Each item is 50.dp
+            
+            val snapIndex = if (firstVisibleOffset > itemHeight / 2) {
+                firstVisibleIndex + 1
+            } else {
+                firstVisibleIndex
+            }
+            
+            // Snap to the calculated index
+            val targetIndex = snapIndex.coerceIn(0, range.count() - 1)
+            val targetValue = range.first + targetIndex
+            
+            if (targetValue != value) {
+                onValueChange(targetValue)
+            }
+            
+            // Smooth scroll to center the item
+            listState.animateScrollToItem(targetIndex, scrollOffset = 0)
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .width(80.dp)
+            .height(150.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        LazyColumn(
+            state = listState,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(vertical = 50.dp),
+            userScrollEnabled = true
+        ) {
+            items(range.count()) { index ->
+                val number = range.first + index
+                val isSelected = number == value
+                
+                TextButton(
+                    onClick = { 
+                        onValueChange(number)
+                    },
+                    modifier = Modifier.height(50.dp)
+                ) {
+                    Text(
+                        text = "%02d".format(number),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        color = if (isSelected) ElectricBlue else Gray500,
+                        fontSize = if (isSelected) 28.sp else 20.sp
+                    )
+                }
+            }
+        }
+        
+        // Selection indicator - top line
+        HorizontalDivider(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 50.dp),
+            thickness = 1.dp,
+            color = Gray400
+        )
+        
+        // Selection indicator - bottom line
+        HorizontalDivider(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 50.dp),
+            thickness = 1.dp,
+            color = Gray400
+        )
+    }
 }
