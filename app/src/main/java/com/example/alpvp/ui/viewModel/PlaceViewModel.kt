@@ -3,7 +3,7 @@ package com.example.alpvp.ui.viewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alpvp.data.dto.Place
-import com.example.alpvp.data.repository.PlaceRepository
+import com.example.alpvp.data.Repository.PlaceRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

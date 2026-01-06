@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alpvp.data.dto.DashboardData
 import com.example.alpvp.data.dto.UserProfileData
-import com.example.alpvp.data.repository.DashboardRepository
+import com.example.alpvp.data.Repository.DashboardRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -1,4 +1,4 @@
-package com.example.alpvp.data.repository
+package com.example.alpvp.data.Repository
 
 import com.example.alpvp.ui.model.User
 import com.example.alpvp.data.Service.AppService

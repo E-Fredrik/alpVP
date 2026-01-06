@@ -3,19 +3,22 @@ package com.example.alpvp.ui.view
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MailOutline
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -23,6 +26,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.alpvp.R
+import com.example.alpvp.ui.theme.*
 import com.example.alpvp.ui.viewModel.AuthViewModel
 import kotlinx.coroutines.launch
 
@@ -42,165 +46,290 @@ fun LoginScreen(
     val loading = uiState.loading
     val error = uiState.error
 
-    val bg = Brush.verticalGradient(listOf(Color(0xFFF3F7FB), Color(0xFFEFF4FB)))
-
-    Surface(modifier = modifier.fillMaxSize()) {
-        Box(
+    Surface(
+        modifier = modifier.fillMaxSize(),
+        color = BackgroundLight
+    ) {
+        Column(
             modifier = Modifier
-                .background(bg)
                 .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 40.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(top = 48.dp, bottom = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
+            // App Logo Section
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = SurfaceWhite,
+                shadowElevation = 2.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
             ) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Welcome back",
-                    style = MaterialTheme.typography.headlineSmall.copy(fontSize = 28.sp),
-                    color = Color(0xFF0F1724),
-                    modifier = Modifier.align(Alignment.Start)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Card(
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .shadow(6.dp, RoundedCornerShape(20.dp))
+                        .padding(20.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
+                    Box(
                         modifier = Modifier
-                            .padding(20.dp)
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                            .size(64.dp)
+                            .background(ElectricBlue, RoundedCornerShape(16.dp)),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(64.dp)
-                                .background(Color(0xFF4F8BFF), RoundedCornerShape(12.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                                contentDescription = "App logo",
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                            contentDescription = "App logo",
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
 
-                        Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
 
-                        Column {
-                            Text("Nudge", style = MaterialTheme.typography.titleMedium)
-                            Text("Calorie Tracker", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                        }
+                    Column {
+                        Text(
+                            "Nudge",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Gray900
+                        )
+                        Text(
+                            "Calorie Tracker",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray600
+                        )
                     }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(24.dp))
+            // Welcome Text
+            Text(
+                text = "Welcome back",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = Gray900,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+            )
 
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(4.dp, RoundedCornerShape(16.dp))
-                ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        OutlinedTextField(
-                            value = email,
-                            onValueChange = { email = it },
-                            label = { Text("Email") },
-                            leadingIcon = { Icon(Icons.Default.MailOutline, contentDescription = null) },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
+            Text(
+                text = "Sign in to continue tracking your calories",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Gray600,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp)
+            )
+
+            // Login Form Card
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = SurfaceWhite,
+                shadowElevation = 2.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    // Email Field
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email address") },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.MailOutline,
+                                contentDescription = null,
+                                tint = ElectricBlue
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ElectricBlue,
+                            unfocusedBorderColor = Gray200
                         )
+                    )
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                        OutlinedTextField(
-                            value = password,
-                            onValueChange = { password = it },
-                            label = { Text("Password") },
-                            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-                            trailingIcon = {
-                                TextButton(onClick = { showPassword = !showPassword }) {
-                                    Text(if (showPassword) "Hide" else "Show")
-                                }
-                            },
-                            visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
+                    // Password Field
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Password") },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Lock,
+                                contentDescription = null,
+                                tint = ElectricBlue
+                            )
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { showPassword = !showPassword }) {
+                                Icon(
+                                    if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = if (showPassword) "Hide password" else "Show password",
+                                    tint = Gray500
+                                )
+                            }
+                        },
+                        visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ElectricBlue,
+                            unfocusedBorderColor = Gray200
                         )
+                    )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                        if (!error.isNullOrEmpty()) {
-                            Text(text = error, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(bottom = 8.dp))
+                    // Error Message
+                    if (!error.isNullOrEmpty()) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Error.copy(alpha = 0.1f),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = error,
+                                color = Error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(12.dp)
+                            )
                         }
+                    }
 
-                        Button(
-                            onClick = {
-                                if (email.isBlank() || password.isBlank()) {
-                                    authViewModel.login(email.trim(), password)
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Login Button
+                    Button(
+                        onClick = {
+                            if (email.isBlank() || password.isBlank()) {
+                                authViewModel.login(email.trim(), password)
                                     return@Button
                                 }
                                 scope.launch {
                                     authViewModel.login(email.trim(), password)
                                 }
                             },
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(16.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(52.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F8BFF))
+                                .height(56.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = ElectricBlue,
+                                disabledContainerColor = Gray200
+                            ),
+                            enabled = !loading
                         ) {
                             if (loading) {
-                                CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    strokeWidth = 2.dp,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    "Signing in...",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            } else {
+                                Text(
+                                    "Sign in",
+                                    color = Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             }
-                            Text("Sign in", color = Color.White)
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                        TextButton(
-                            onClick = { /* navigate to forgot password */ },
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        ) {
-                            Text("Forgot password?", color = Color.Gray)
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFDEE7F4))
-                    Text("  or  ", color = Color.Gray)
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFDEE7F4))
-                }
-
-                Spacer(modifier = Modifier.height(22.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Don't have an account?", color = Color.Gray)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    TextButton(onClick = { onNavigateToSignUp() }) {
-                        Text("Sign up", color = Color(0xFF4F8BFF))
+                    // Forgot Password
+                    TextButton(
+                        onClick = { /* navigate to forgot password */ },
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    ) {
+                        Text(
+                            "Forgot password?",
+                            color = Gray500,
+                            fontSize = 14.sp
+                        )
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Divider with "or"
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                HorizontalDivider(
+                    modifier = Modifier.weight(1f),
+                    color = Gray200,
+                    thickness = 1.dp
+                )
+                Text(
+                    text = "  OR  ",
+                    color = Gray500,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                HorizontalDivider(
+                    modifier = Modifier.weight(1f),
+                    color = Gray200,
+                    thickness = 1.dp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Sign Up Section
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = ElectricBlue.copy(alpha = 0.08f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Don't have an account?",
+                        color = Gray700,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    TextButton(onClick = onNavigateToSignUp) {
+                        Text(
+                            "Sign up",
+                            color = ElectricBlue,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

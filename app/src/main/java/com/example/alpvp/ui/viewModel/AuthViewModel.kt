@@ -2,9 +2,9 @@ package com.example.alpvp.ui.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alpvp.data.repository.AuthRepository
-import com.example.alpvp.data.repository.UserRepository
-import com.example.alpvp.data.UserPreferencesRepository
+import com.example.alpvp.data.Repository.AuthRepository
+import com.example.alpvp.data.Repository.UserRepository
+import com.example.alpvp.data.Repository.UserPreferencesRepository
 import com.example.alpvp.ui.model.UserModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

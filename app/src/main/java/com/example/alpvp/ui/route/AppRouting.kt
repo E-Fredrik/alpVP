@@ -153,16 +153,16 @@ fun AppRouting() {
             modifier = Modifier.padding(innerPadding),
             navController = navController,
             // start at login screen
-            startDestination = "Login"
+            startDestination = AppScreens.LOGIN.title
         ) {
             // Login route
-            composable("Login") {
+            composable(AppScreens.LOGIN.title) {
 
                 val authUiState by authViewModel.uiState.collectAsState()
                 LaunchedEffect(authUiState.token) {
                     authUiState.token?.let {
                         navController.navigate(AppScreens.HOME.title) {
-                            popUpTo("Login") { inclusive = true }
+                            popUpTo(AppScreens.LOGIN.title) { inclusive = true }
                         }
                     }
                 }
@@ -170,7 +170,7 @@ fun AppRouting() {
                 LoginScreen(
                     authViewModel = authViewModel,
                     onNavigateToSignUp = {
-                        navController.navigate("Register") {
+                        navController.navigate(AppScreens.REGISTER.title) {
                             launchSingleTop = true
                         }
                     }
@@ -198,7 +198,7 @@ fun AppRouting() {
                 val authUiState by authViewModel.uiState.collectAsState()
                 if (authUiState.token == null) {
                     LaunchedEffect(Unit) {
-                        navController.navigate("Login") {
+                        navController.navigate(AppScreens.LOGIN.title) {
                             launchSingleTop = true
                         }
                     }
@@ -225,7 +225,7 @@ fun AppRouting() {
                 val authUiState by authViewModel.uiState.collectAsState()
                 if (authUiState.token == null) {
                     LaunchedEffect(Unit) {
-                        navController.navigate("Login") {
+                        navController.navigate(AppScreens.LOGIN.title) {
                             launchSingleTop = true
                         }
                     }
@@ -239,7 +239,7 @@ fun AppRouting() {
                 val authUiState by authViewModel.uiState.collectAsState()
                 if (authUiState.token == null) {
                     LaunchedEffect(Unit) {
-                        navController.navigate("Login") {
+                        navController.navigate(AppScreens.LOGIN.title) {
                             launchSingleTop = true
                         }
                     }
@@ -253,23 +253,28 @@ fun AppRouting() {
                 }
             }
 
-            composable("Register") {
+            composable(AppScreens.REGISTER.title) {
                 val authUiState by authViewModel.uiState.collectAsState()
                 if (authUiState.token != null) {
                     LaunchedEffect(authUiState.token) {
                         navController.navigate(AppScreens.HOME.title) {
-                            popUpTo("Register") { inclusive = true }
+                            popUpTo(AppScreens.REGISTER.title) { inclusive = true }
                             launchSingleTop = true
                         }
                     }
                     Text("Redirecting to Home...")
                 } else {
-                    RegisterScreen(authViewModel = authViewModel)
+                    RegisterScreen(
+                        authViewModel = authViewModel,
+                        onNavigateToLogin = {
+                            navController.navigate(AppScreens.LOGIN.title) {
+                                popUpTo(AppScreens.REGISTER.title) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    )
                 }
             }
         }
     }
 }
-
-
-

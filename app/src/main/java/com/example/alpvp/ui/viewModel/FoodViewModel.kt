@@ -3,7 +3,7 @@ package com.example.alpvp.ui.viewModel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.alpvp.data.repository.FoodRepository
+import com.example.alpvp.data.Repository.FoodRepository
 import com.example.alpvp.data.dto.*
 import com.example.alpvp.ui.model.FoodLogModel
 import com.example.alpvp.ui.model.FoodInLogItemModel

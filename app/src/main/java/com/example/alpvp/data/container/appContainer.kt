@@ -1,21 +1,21 @@
 package com.example.alpvp.data.container
 
 import android.content.Context
-import com.example.alpvp.data.repository.AuthRepository
-import com.example.alpvp.data.repository.UserRepository
-import com.example.alpvp.data.repository.FoodRepository
-import com.example.alpvp.data.repository.DashboardRepository
-import com.example.alpvp.data.repository.FriendRepository
-import com.example.alpvp.data.repository.DailySummaryRepository
-import com.example.alpvp.data.repository.ActivityLogRepository
-import com.example.alpvp.data.repository.VisitLogRepository
-import com.example.alpvp.data.repository.EmaLogRepository
-import com.example.alpvp.data.repository.PlaceRepository
+import com.example.alpvp.data.Repository.AuthRepository
+import com.example.alpvp.data.Repository.UserRepository
+import com.example.alpvp.data.Repository.FoodRepository
+import com.example.alpvp.data.Repository.DashboardRepository
+import com.example.alpvp.data.Repository.FriendRepository
+import com.example.alpvp.data.Repository.DailySummaryRepository
+import com.example.alpvp.data.Repository.ActivityLogRepository
+import com.example.alpvp.data.Repository.VisitLogRepository
+import com.example.alpvp.data.Repository.EmaLogRepository
+import com.example.alpvp.data.Repository.PlaceRepository
 import com.example.alpvp.data.Service.FoodService
 import com.example.alpvp.data.Service.UserService
 import com.example.alpvp.data.Service.AppService
 import com.example.alpvp.data.Service.DashboardService
-import com.example.alpvp.data.UserPreferencesRepository
+import com.example.alpvp.data.Repository.UserPreferencesRepository
 import com.example.alpvp.data.Service.AARService
 import com.example.alpvp.notification.SmartNotificationManager
 import com.example.alpvp.notification.NotificationScheduler
@@ -27,7 +27,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class AppContainer(private val context: Context) {
     companion object {
-        val BASE_URL = "http://10.0.172.42:3000/"
+        val BASE_URL = "https://nudge.up.railway.app/"
         //10.0.181.207
         //val BASE_URL = "http://10.152.62.60:3000/"
     }
