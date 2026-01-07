@@ -201,7 +201,8 @@ fun AppRouting() {
                 items = listOf(
                     AppScreens.HOME,
                     AppScreens.FOOD,
-                    AppScreens.FRIENDS
+                    AppScreens.FRIENDS,
+                    AppScreens.PROFILE
                 )
             )
         }
