@@ -22,6 +22,7 @@ import com.example.alpvp.data.dto.FriendFoodLog
 import com.example.alpvp.ui.theme.*
 import com.example.alpvp.ui.viewModel.DashboardViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FriendsScreen(
     dashboardViewModel: DashboardViewModel
@@ -36,103 +37,104 @@ fun FriendsScreen(
         .distinctBy { it.friendId }
         .map { Friend(userId = it.friendId, name = it.friendName) }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundLight)
-    ) {
-        // Header
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(top = 32.dp, bottom = 24.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
                     Text(
-                        text = "Friends",
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = Gray900
+                        "Friends",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "See what your friends are eating",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Gray600
-                    )
-                }
-
-                IconButton(
-                    onClick = { showAddFriendDialog = true },
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(ElectricBlue)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PersonAdd,
-                        contentDescription = "Add Friend",
-                        tint = SurfaceWhite
-                    )
-                }
-            }
-        }
-
-        // Friends Grid
-        item {
-            Text(
-                text = "Your Friends (${uniqueFriends.size})",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Gray900,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                },
+                actions = {
+                    IconButton(onClick = { showAddFriendDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.PersonAdd,
+                            contentDescription = "Add Friend",
+                            tint = ElectricBlue
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = BackgroundLight,
+                    titleContentColor = Gray900
+                )
             )
         }
-
-        if (uniqueFriends.isNotEmpty()) {
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(BackgroundLight)
+                .padding(padding)
+        ) {
+            // Subtitle
             item {
-                Row(
+                Text(
+                    text = "See what your friends are eating",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Gray600,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    uniqueFriends.take(4).forEach { friend ->
-                        FriendCard(
-                            friend = friend,
-                            friendLogs = friendLogs,
-                            modifier = Modifier.weight(1f)
-                        )
+                        .padding(horizontal = 24.dp)
+                        .padding(top = 16.dp, bottom = 24.dp)
+                )
+            }
+
+            // Friends Grid
+            item {
+                Text(
+                    text = "Your Friends (${uniqueFriends.size})",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray900,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                )
+            }
+
+            if (uniqueFriends.isNotEmpty()) {
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        uniqueFriends.take(4).forEach { friend ->
+                            FriendCard(
+                                friend = friend,
+                                friendLogs = friendLogs,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
                 }
             }
+
+            // Recent Activity
+            item {
+                Text(
+                    text = "Recent Activity",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Gray900,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                )
+            }
+
+            items(friendLogs) { log ->
+                FriendFoodLogItem(log = log)
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
 
-        // Recent Activity
-        item {
-            Text(
-                text = "Recent Activity",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Gray900,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
-            )
+        if (showAddFriendDialog) {
+            AddFriendDialog(onDismiss = { showAddFriendDialog = false })
         }
-
-        items(friendLogs) { log ->
-            FriendFoodLogItem(log = log)
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-    }
-
-    if (showAddFriendDialog) {
-        AddFriendDialog(onDismiss = { showAddFriendDialog = false })
     }
 }
 

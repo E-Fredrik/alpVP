@@ -131,6 +131,61 @@ class NotificationViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    /**
+     * Update notification settings and reschedule notifications
+     */
+    fun updateNotificationSettings(
+        enabled: Boolean,
+        breakfastTime: String?,
+        lunchTime: String?,
+        dinnerTime: String?,
+        snackTime: String?
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _uiState.value = _uiState.value.copy(loading = true, error = null, successMessage = null)
+
+                val settings = NotificationSettings(
+                    notificationEnabled = enabled,
+                    breakfastTime = breakfastTime,
+                    lunchTime = lunchTime,
+                    dinnerTime = dinnerTime,
+                    snackTime = snackTime
+                )
+
+                val response = appContainer.appService.updateNotificationSettings(settings)
+
+                if (response.isSuccessful && response.body() != null) {
+                    _uiState.value = _uiState.value.copy(
+                        loading = false,
+                        settings = response.body()!!.data,
+                        successMessage = "Settings updated successfully!"
+                    )
+
+                    // Reschedule notifications with new settings
+                    loadAndScheduleNotifications()
+
+                    Log.d("NotificationVM", "✅ Settings updated successfully")
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        loading = false,
+                        error = "Failed to update settings: ${response.code()}"
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("NotificationVM", "Failed to update settings", e)
+                _uiState.value = _uiState.value.copy(
+                    loading = false,
+                    error = "Error: ${e.message}"
+                )
+            }
+        }
+    }
+
+    fun clearMessages() {
+        _uiState.value = _uiState.value.copy(error = null, successMessage = null)
+    }
+
     private fun loadSettingsIntoUiState() {
         viewModelScope.launch(Dispatchers.IO) {
             try {

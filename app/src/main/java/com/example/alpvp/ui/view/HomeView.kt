@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import com.example.alpvp.ui.components.CircularProgress
 import com.example.alpvp.ui.theme.*
 import com.example.alpvp.ui.model.FoodLog
@@ -28,19 +30,54 @@ import com.example.alpvp.data.dto.RecentFoodLog
 import com.example.alpvp.data.dto.FoodInRecentLog
 import com.example.alpvp.data.dto.WeeklyProgressItem
 import com.example.alpvp.data.dto.FriendFoodLog
+import com.example.alpvp.worker.LocationCheckScheduler
+import java.util.Calendar
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     dashboardViewModel: DashboardViewModel,
     aarViewModel: AARViewModel,
-    onOpenFood: () -> Unit = {}
+    onOpenFood: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val uiState by dashboardViewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
+    // Get current date (midnight) - this will trigger recomposition when date changes
+    val currentDate = remember {
+        derivedStateOf {
+            Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+        }
+    }
     
     LaunchedEffect(uiState.userProfile?.userId) {
         uiState.userProfile?.userId?.let { userId ->
             aarViewModel.startMonitoring(userId)
+            LocationCheckScheduler.startLocationChecks(context)
+        }
+    }
+    
+    // Reload dashboard data when date changes (triggers at midnight)
+    LaunchedEffect(currentDate.value) {
+        // Only reload if we have a token and the date has actually changed
+        if (uiState.userProfile != null) {
+            android.util.Log.d("DashboardScreen", "Date changed to ${currentDate.value}, refreshing data...")
+            dashboardViewModel.refreshDashboardData()
+        }
+    }
+    
+    // Refresh dashboard data when screen becomes visible (e.g., after logging food)
+    LaunchedEffect(Unit) {
+        // Track when screen is displayed
+        android.util.Log.d("DashboardScreen", "Dashboard screen displayed, refreshing data...")
+        if (uiState.userProfile != null) {
+            dashboardViewModel.refreshDashboardData()
         }
     }
 
@@ -51,10 +88,38 @@ fun DashboardScreen(
         }
     }
 
-    DashboardScreenContent(
-        uiState = uiState,
-        onOpenFood = onOpenFood
-    )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "Dashboard",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToProfile) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = ElectricBlue
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = BackgroundLight,
+                    titleContentColor = Gray900
+                )
+            )
+        }
+    ) { padding ->
+        DashboardScreenContent(
+            uiState = uiState,
+            onOpenFood = onOpenFood,
+            paddingValues = padding
+        )
+    }
 }
 
 
@@ -109,7 +174,8 @@ private fun calculateStreak(foodLogs: List<RecentFoodLog>): Int {
 @Composable
 private fun DashboardScreenContent(
     uiState: DashboardUiState,
-    onOpenFood: () -> Unit = {}
+    onOpenFood: () -> Unit = {},
+    paddingValues: PaddingValues = PaddingValues(0.dp)
 ) {
     
     fun getBMIStatus(): String {
@@ -120,7 +186,35 @@ private fun DashboardScreenContent(
         return "BMI: %.1f (Goal: %.1f)".format(currentBMI, profile.bmiGoal)
     }
 
-    val todayCalories = uiState.dashboardData?.todayCalories ?: 0
+    // Calculate today's start timestamp (midnight)
+    val todayStart = remember {
+        Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    // Calculate today's calories by filtering recent food logs
+    val todayCalories = remember(uiState.userProfile?.recentFoodLogs) {
+        uiState.userProfile?.recentFoodLogs
+            ?.filter { log -> log.timestamp >= todayStart }
+            ?.flatMap { it.foods }
+            ?.sumOf { it.calories } ?: 0
+    }
+
+    android.util.Log.d("DashboardScreen", "📊 Today start: $todayStart")
+    android.util.Log.d("DashboardScreen", "📊 Calculated today's calories: $todayCalories")
+    android.util.Log.d("DashboardScreen", "📊 Recent logs count: ${uiState.userProfile?.recentFoodLogs?.size}")
+    
+    // Log each food log for debugging
+    uiState.userProfile?.recentFoodLogs?.forEach { log ->
+        android.util.Log.d("DashboardScreen", "📊 Log timestamp: ${log.timestamp} (${if (log.timestamp >= todayStart) "TODAY" else "OLDER"})")
+        log.foods.forEach { food ->
+            android.util.Log.d("DashboardScreen", "   - ${food.foodName}: ${food.calories} cal")
+        }
+    }
 
     // Calculate calorie goal based on user's BMI goal
     val caloriesGoal = uiState.userProfile?.let { profile ->
@@ -148,19 +242,37 @@ private fun DashboardScreenContent(
         (tdee + adjustment).toInt()
     } ?: 2200 // Default if no profile data
 
-    val caloriesRemaining = caloriesGoal - todayCalories
+    // Prevent negative remaining (show 0 instead)
+    val caloriesRemaining = maxOf(0, caloriesGoal - todayCalories)
 
     
-    val recentFoodLogs = uiState.userProfile?.recentFoodLogs?.flatMap { log ->
-        log.foods.map { food ->
-            FoodLog(
-                foodName = food.foodName,
-                calories = food.calories,
-                timestamp = log.timestamp,
-                quantity = food.quantity
-            )
+    // Get current date (day) to trigger recomposition on date change
+    val currentDate = remember {
+        derivedStateOf {
+            Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
         }
-    } ?: emptyList()
+    }
+    
+    // Filter food logs for today only
+    val recentFoodLogs = remember(uiState.userProfile?.recentFoodLogs, currentDate.value) {
+        uiState.userProfile?.recentFoodLogs
+            ?.filter { log -> log.timestamp >= todayStart }
+            ?.flatMap { log ->
+                log.foods.map { food ->
+                    FoodLog(
+                        foodName = food.foodName,
+                        calories = food.calories,
+                        timestamp = log.timestamp,
+                        quantity = food.quantity
+                    )
+                }
+            } ?: emptyList()
+    }
 
     val lastMeal = recentFoodLogs.maxByOrNull { it.timestamp }
 
@@ -177,25 +289,21 @@ private fun DashboardScreenContent(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundLight)
+            .padding(paddingValues)
             .verticalScroll(rememberScrollState())
     ) {
-        // Header
+        // BMI Status
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(top = 32.dp, bottom = 24.dp)
+                .padding(top = 16.dp, bottom = 24.dp)
         ) {
             Text(
-                text = "Dashboard",
-                style = MaterialTheme.typography.headlineLarge,
-                color = Gray900
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
                 text = getBMIStatus(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = Gray600
+                style = MaterialTheme.typography.bodyLarge,
+                color = Gray600,
+                fontWeight = FontWeight.Medium
             )
         }
 
@@ -223,14 +331,14 @@ private fun DashboardScreenContent(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 if (uiState.loading) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = ElectricBlue)
                     Spacer(modifier = Modifier.height(12.dp))
                     Text("Loading summary...", color = Gray600)
                 } else if (uiState.error != null) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             "Failed to load summary",
-                            color = MaterialTheme.colorScheme.error,
+                            color = ErrorRed,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(8.dp))
@@ -272,7 +380,7 @@ private fun DashboardScreenContent(
                             text = "$caloriesRemaining",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Gray900
+                            color = if (caloriesRemaining == 0 && todayCalories > caloriesGoal) ErrorRed else Gray900
                         )
                         Text(
                             text = "Remaining",
@@ -362,7 +470,8 @@ private fun DashboardScreenContent(
                 .height(56.dp),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = CoralRed
+                containerColor = CoralRed,
+                contentColor = SurfaceWhite
             )
         ) {
             Icon(

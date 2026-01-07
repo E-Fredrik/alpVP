@@ -230,6 +230,42 @@ class SmartNotificationManager(private val context: Context) {
     }
 
     /**
+     * Send restaurant reminder notification
+     */
+    fun sendRestaurantReminderNotification(placeName: String, distance: Int) {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("open_food_log", true)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID_LOCATION)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Restaurant Nearby! 🍽️")
+            .setContentText("You're ${distance}m from $placeName. Don't forget to log your meal!")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setVibrate(longArrayOf(0, 500, 200, 500))
+            .build()
+
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationManager.notify(NOTIFICATION_ID_FOOD_REMINDER, notification)
+            Log.d("SmartNotification", "Restaurant reminder sent: $placeName (${distance}m away)")
+        }
+    }
+
+    /**
      * Start periodic location monitoring
      */
 //    fun startLocationMonitoring(userId: Int) {
