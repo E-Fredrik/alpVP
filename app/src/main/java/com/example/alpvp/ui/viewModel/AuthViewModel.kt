@@ -8,6 +8,7 @@ import com.example.alpvp.data.Repository.UserPreferencesRepository
 import com.example.alpvp.ui.model.UserModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import android.util.Log
 
@@ -16,7 +17,8 @@ data class AuthUiState(
     val token: String? = null,
     val userId: Int? = null,
     val user: UserModel? = null,
-    val error: String? = null
+    val error: String? = null,
+    val initialized: Boolean = false // true once preferences have emitted at least once
 )
 
 class AuthViewModel(
@@ -29,18 +31,19 @@ class AuthViewModel(
     val uiState: StateFlow<AuthUiState> = _uiState
 
     init {
+        // Combine token and userId flows so we detect when initial values are loaded
         viewModelScope.launch {
-            userPreferencesRepository.authTokenFlow.collect { token ->
+            combine(
+                userPreferencesRepository.authTokenFlow,
+                userPreferencesRepository.userIdFlow
+            ) { token, userId ->
+                Pair(token, userId)
+            }.collect { (token, userId) ->
                 _uiState.value = _uiState.value.copy(
-                    token = token
-                )
-            }
-        }
-        viewModelScope.launch {
-            userPreferencesRepository.userIdFlow.collect { userId ->
-                _uiState.value = _uiState.value.copy(
+                    token = token,
                     userId = userId,
-                    user = userId?.let { UserModel(id = it) }
+                    user = userId?.let { UserModel(id = it) },
+                    initialized = true
                 )
             }
         }

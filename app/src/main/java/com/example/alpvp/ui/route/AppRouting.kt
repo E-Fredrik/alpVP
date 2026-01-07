@@ -41,6 +41,7 @@ import com.example.alpvp.ui.viewModel.DashboardViewModel
 import com.example.alpvp.ui.viewModel.AuthViewModel
 import com.example.alpvp.ui.viewModel.FoodViewModel
 import com.example.alpvp.ui.viewModel.AARViewModel
+import kotlinx.coroutines.flow.first
 
 enum class AppScreens (val title: String, val icon: ImageVector?= null) {
     HOME("Home", Icons.Filled.Home),
@@ -109,6 +110,27 @@ fun AppRouting() {
         }
     )
 
+    // Observe auth state
+    val authUiState by authViewModel.uiState.collectAsState()
+
+    // On startup, wait for DataStore to emit the initial token value directly from the
+    // UserPreferencesRepository (avoids any ViewModel initialization timing issues),
+    // then redirect once: unauthenticated -> Profile, authenticated -> Home.
+    LaunchedEffect(Unit) {
+        // suspend until first emission is available (may be null)
+        val token = container.userPreferencesRepository.authTokenFlow.first()
+        if (token == null) {
+            navController.navigate(AppScreens.PROFILE.title) {
+                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                launchSingleTop = true
+            }
+        } else {
+            navController.navigate(AppScreens.HOME.title) {
+                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
 
     val dashboardViewModel: DashboardViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
@@ -152,8 +174,8 @@ fun AppRouting() {
         NavHost(
             modifier = Modifier.padding(innerPadding),
             navController = navController,
-            // start at login screen
-            startDestination = AppScreens.LOGIN.title
+            // start at home; startup redirect will send unauthenticated users to Profile
+            startDestination = AppScreens.HOME.title
         ) {
             // Login route
             composable(AppScreens.LOGIN.title) {
@@ -198,7 +220,7 @@ fun AppRouting() {
                 val authUiState by authViewModel.uiState.collectAsState()
                 if (authUiState.token == null) {
                     LaunchedEffect(Unit) {
-                        navController.navigate(AppScreens.LOGIN.title) {
+                        navController.navigate(AppScreens.PROFILE.title) {
                             launchSingleTop = true
                         }
                     }
@@ -225,7 +247,7 @@ fun AppRouting() {
                 val authUiState by authViewModel.uiState.collectAsState()
                 if (authUiState.token == null) {
                     LaunchedEffect(Unit) {
-                        navController.navigate(AppScreens.LOGIN.title) {
+                        navController.navigate(AppScreens.PROFILE.title) {
                             launchSingleTop = true
                         }
                     }
@@ -235,22 +257,13 @@ fun AppRouting() {
                 }
             }
 
+            // Always show ProfileScreen; it will render login/register UI if unauthenticated
             composable(AppScreens.PROFILE.title) {
-                val authUiState by authViewModel.uiState.collectAsState()
-                if (authUiState.token == null) {
-                    LaunchedEffect(Unit) {
-                        navController.navigate(AppScreens.LOGIN.title) {
-                            launchSingleTop = true
-                        }
-                    }
-                    Text("Redirecting to Login...")
-                } else {
-                    ProfileScreen(
-                        authViewModel = authViewModel,
-                        dashboardViewModel = dashboardViewModel,
-                        appService = container.appService
-                    )
-                }
+                ProfileScreen(
+                    authViewModel = authViewModel,
+                    dashboardViewModel = dashboardViewModel,
+                    appService = container.appService
+                )
             }
 
             composable(AppScreens.REGISTER.title) {
